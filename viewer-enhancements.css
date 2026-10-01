@@ -1,0 +1,31 @@
+.vex-bar{padding:12px 18px 0}
+.vex-browse{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.vex-step{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;min-height:32px;padding:6px 11px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink);font-size:11px;line-height:1.2;white-space:nowrap}
+.vex-step:hover:not(:disabled){background:var(--tint);border-color:#cbd6c7}
+.vex-step:disabled{background:#f4f5f0;color:#b5bbb0}
+.vex-glyph{font-size:15px;line-height:1}
+.vex-position{flex:1;min-width:0;margin:0;text-align:center;font-size:10px;line-height:1.4;color:var(--muted)}
+.vex-position strong{display:block;font-size:12px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.vex-keys{white-space:nowrap}
+.vex-keys kbd{margin-left:2px}
+.vex-compare{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 10px 9px 12px;border:1px solid var(--line);border-radius:8px;background:#f7f8f3}
+.vex-relation{min-width:0;margin:0;font-size:10px;line-height:1.45;color:var(--muted)}
+.vex-relation strong{display:block;font-size:11px;font-weight:600;color:var(--ink)}
+.vex-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:9px 2px 0}
+.vex-fav{display:inline-flex;align-items:center;gap:5px;min-height:28px;padding:4px 10px 4px 8px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--muted);font-size:11px;line-height:1.2}
+.vex-fav:hover{color:var(--ink);background:var(--tint)}
+.vex-fav[aria-pressed=true]{border-color:#bfcdbb;background:var(--tint);color:var(--accent);font-weight:600}
+.vex-star{font-size:13px;line-height:1}
+.vex-save{display:inline-flex;align-items:center;gap:4px;min-height:28px;padding:4px 2px;color:var(--accent);font-size:11px;text-decoration:underline;text-decoration-color:#a9b8a5;text-underline-offset:3px}
+.vex-save:hover{text-decoration-color:currentColor}
+.vex-save:focus-visible{outline:3px solid #849b79;outline-offset:2px;border-radius:3px}
+.vex-save .vex-glyph{font-size:12px}
+.vex-save-off{font-size:11px;color:var(--muted)}
+.vex-missing{display:grid;place-items:center;min-height:200px;padding:20px;text-align:center;font-size:11px;line-height:1.5;color:var(--muted);background:#f5f6f1;border:1px dashed #dce0d6;border-radius:6px}
+.face-detail .vex-missing{position:absolute;inset:0;min-height:0}
+.vex-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(hover:none){.vex-keys{display:none}}
+@media(max-width:700px){.vex-bar{padding:10px 10px 0}.vex-browse{gap:8px}.vex-step{min-height:30px;padding:5px 8px;font-size:10px}.vex-keys{display:none}.vex-position{font-size:9px}.vex-position strong{font-size:11px}.vex-compare{gap:8px;padding:8px 9px}.vex-relation{font-size:9px}.vex-relation strong{font-size:10px}.vex-actions{gap:5px 8px;padding-top:7px}.vex-fav,.vex-save,.vex-save-off{font-size:10px}.vex-fav{padding:4px 8px 4px 6px}}
+
+.face-detail .has-detail-image .viewer-image-frame{aspect-ratio:auto;height:auto}
+.face-detail .has-detail-image .viewer-image-frame img{position:static;width:100%;height:auto;max-height:70vh;object-fit:contain;transform:none}

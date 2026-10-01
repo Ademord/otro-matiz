@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Otro Matiz — Visual decisions</title>
+  <link rel="stylesheet" href="./style.css?v=0.3.7">
+  <link rel="stylesheet" href="./favorites.css?v=0.3.7">
+  <link rel="stylesheet" href="./viewer-enhancements.css?v=0.3.7">
+  <link rel="stylesheet" href="./viewer-navigation.css?v=0.3.7">
+  <link rel="stylesheet" href="./studio.css?v=0.3.7">
+  <link rel="stylesheet" href="./workspace.css?v=0.3.7">
+  <link rel="stylesheet" href="./decisions.css?v=0.3.7">
+  <link rel="stylesheet" href="./portability.css?v=0.3.7">
+  <link rel="stylesheet" href="./generation.css?v=0.3.7">
+  <link rel="stylesheet" href="./presentation.css?v=0.3.7">
+  <link rel="stylesheet" href="./workspace-controls.css?v=0.3.7">
+  <link rel="preload" as="script" href="./gallery.js?v=0.3.7">
+  <link rel="preload" as="script" href="./navigation.js?v=0.3.7">
+  <link rel="preload" as="script" href="./lists-store.js?v=0.3.7">
+  <link rel="preload" as="script" href="./favorites.js?v=0.3.7">
+  <link rel="preload" as="script" href="./viewer-enhancements.js?v=0.3.7">
+  <link rel="preload" as="script" href="./viewer-navigation.js?v=0.3.7">
+  <link rel="preload" as="script" href="./workspace.js?v=0.3.7">
+  <link rel="preload" as="script" href="./decisions.js?v=0.3.7">
+  <link rel="preload" as="script" href="./portability.js?v=0.3.7">
+  <link rel="preload" as="script" href="./generation.js?v=0.3.7">
+  <link rel="preload" as="script" href="./presentation.js?v=0.3.7">
+  <script defer src="./escape-navigation.js?v=0.3.7"></script>
+  <script defer src="./data.js?v=0.3.7"></script>
+  <script defer src="./project-store.js?v=0.3.7"></script>
+  <script defer src="./bootstrap.js?v=0.3.7"></script>
+</head>
+<body class="studio-experience">
+  <main class="page">
+    <header class="intro">
+      <div class="eyebrow"><span class="local-dot" aria-hidden="true"></span> OTRO MATIZ <span class="local-tag">VISUAL DECISION STUDIO</span></div>
+      <div id="studio-toolbar"></div>
+      <div class="title-line">
+        <div><h1>Explore another shade.</h1><p class="subtitle">Compare variations. Find the combination that fits.</p></div>
+        <div class="progress" aria-live="polite"><strong id="ready-count">—</strong><span id="progress-description">combinations ready</span></div>
+      </div>
+      <div class="guide"><p><strong>Open an option</strong> for the full image. Select any two to compare.</p><span id="remaining-count"></span></div>
+    </header>
+
+    <p id="studio-loading" role="status">Opening your workspace…</p>
+    <p id="studio-storage" class="studio-warning" role="status" hidden></p>
+    <details class="studio-tools-shell" id="studio-tools-disclosure">
+      <summary>Project tools <span>Settings, files &amp; AI handoff</span></summary>
+      <div class="studio-tools">
+      <section id="workspace-panel" aria-label="Project settings"></section>
+      <section id="exchange-panel" aria-label="Import and export"></section>
+      <section id="generation-panel" aria-label="AI handoff"></section>
+      </div>
+    </details>
+    <div id="decision-controls"></div>
+
+    <div class="scroll-hint" id="scroll-hint" hidden><span id="scroll-hint-text"></span><span aria-hidden="true">↔</span></div>
+    <div class="matrix-navigation" id="matrix-navigation">
+      <p id="navigation-hint"><kbd>Alt</kbd> + wheel to zoom · Right-drag to pan<span class="navigation-browser-hint">Ctrl / Cmd zooms the browser. With matrix focus: <kbd>+</kbd> <kbd>−</kbd> <kbd>0</kbd></span></p>
+      <div class="zoom-controls" role="group" aria-label="Image size">
+        <span class="zoom-label">Matrix</span><button type="button" id="zoom-out" aria-label="Decrease image size">−</button><output id="matrix-zoom" aria-label="Image size" aria-live="polite">58%</output><button type="button" id="zoom-in" aria-label="Increase image size">+</button><button type="button" id="zoom-reset" title="Reset image size to 58%">Reset</button><button type="button" id="zoom-fit" title="Fit matrix width">Fit width</button>
+      </div>
+    </div>
+    <section class="matrix-wrap" id="matrix-wrap" tabindex="0" aria-label="Visual option comparison table" aria-describedby="navigation-hint">
+      <table id="matrix">
+        <caption class="sr-only">Options in rows and columns. Only completed combinations can be opened or compared.</caption>
+      </table>
+      <p class="empty-state" id="empty-state" hidden>This dataset could not be loaded. Reload the page or import a valid project.</p>
+    </section>
+
+    <footer class="notes">
+      <p id="project-footnote">Your workspace stays in this browser. Export a project to keep a portable copy.</p>
+      <p id="updated-at"></p>
+    </footer>
+  </main>
+
+  <aside class="compare-tray" id="compare-tray" hidden aria-label="Selected options">
+    <div class="tray-inner"><div id="selected-list" class="selected-list"></div><div class="tray-actions"><button class="text-button" id="clear-selection" type="button">Clear</button><button class="primary-button" id="compare-button" type="button" disabled>Compare 2</button></div></div>
+  </aside>
+  <p class="sr-only" id="announcement" role="status" aria-live="polite"></p>
+
+  <dialog id="viewer" aria-labelledby="viewer-title">
+    <div class="viewer-header"><div><p class="eyebrow" id="viewer-kicker">FULL IMAGE</p><h2 id="viewer-title">Image</h2></div><button class="icon-button" id="close-viewer" type="button" aria-label="Close image viewer">✕</button></div>
+    <div class="viewer-tools"><div class="view-mode-controls" role="group" aria-label="Image framing"><button id="face-detail-button" type="button" aria-pressed="false">Detail view</button><button id="full-portrait-button" type="button" aria-pressed="true">Full image</button></div><p id="viewer-mode-description">Whole image, including its caption</p></div>
+    <div id="viewer-content" class="viewer-content"></div>
+    <div class="viewer-footer"><span>Images stay inside this gallery.</span><button class="text-button" id="close-viewer-bottom" type="button">Close <kbd>Esc</kbd></button></div>
+  </dialog>
+</body>
+</html>

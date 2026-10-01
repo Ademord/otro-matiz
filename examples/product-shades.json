@@ -1,0 +1,53 @@
+{
+  "meta": {
+    "id": "product-shades-demo",
+    "title": "Product shade comparison",
+    "goal": "Compare color families across products. Attach your own product or result images to the pending slots.",
+    "rowsLabel": "Products",
+    "columnsLabel": "Shades"
+  },
+  "rows": [
+    {
+      "id": "product-a",
+      "name": "Product A",
+      "description": "Example record; replace with your own data.",
+      "attributes": {
+        "material": "paper",
+        "weight_g": 60
+      }
+    },
+    {
+      "id": "product-b",
+      "name": "Product B",
+      "description": "Example record; replace with your own data.",
+      "attributes": {
+        "material": "fabric",
+        "weight_g": 200
+      }
+    }
+  ],
+  "columns": [
+    {
+      "id": "copper",
+      "name": "Copper",
+      "attributes": {
+        "hex": "#B76B48"
+      }
+    },
+    {
+      "id": "wine",
+      "name": "Wine",
+      "attributes": {
+        "hex": "#682C40"
+      }
+    },
+    {
+      "id": "blue",
+      "name": "Denim blue",
+      "attributes": {
+        "hex": "#507DB5"
+      }
+    }
+  ],
+  "cells": []
+}

@@ -1,0 +1,13 @@
+/* Compare inspection controls use one linked position and leave captions still. */
+.vcn-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:12px 18px 0;color:var(--ink);font:14px/1.4 system-ui,-apple-system,sans-serif}
+.vcn-button{display:inline-flex;align-items:center;justify-content:center;min-width:40px;min-height:40px;padding:8px 12px;border:1px solid #52616b;border-radius:6px;background:#242b2f;color:#e2e9ed;font:inherit;cursor:pointer}
+.vcn-button:hover:not(:disabled){background:#303b42}
+.vcn-button:disabled{opacity:.45;cursor:default}
+.vcn-button:focus-visible,.viewer-image-frame[tabindex]:focus-visible{outline:3px solid #94bfd9;outline-offset:3px}
+.vcn-value{min-width:54px;text-align:center;font-variant-numeric:tabular-nums;color:var(--muted)}
+.vcn-help{flex:1;min-width:170px;font-size:13px;color:var(--muted)}
+.viewer-image-frame.vcn-zoomed{cursor:crosshair;touch-action:none}
+.viewer-image-frame.vcn-zoomed img{will-change:transform;transition:none;user-select:none;-webkit-user-select:none}
+.vcn-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:700px){.vcn-controls{padding:10px 12px 0}.vcn-help{flex-basis:100%}}
+@media(hover:none){.viewer-image-frame.vcn-zoomed{cursor:grab}}
