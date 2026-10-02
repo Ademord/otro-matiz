@@ -114,7 +114,8 @@
     return {
       id: pick(['id', 'sku', 'code', 'identifier']), row: pick(['name', 'title', 'label', 'product', 'shape', 'style']), column: '',
       image: pick(['image', 'imageurl', 'imagepath', 'photo', 'src', 'preview', 'thumbnail']),
-      description: pick(['description', 'notes', 'details', 'summary'])
+      description: pick(['description', 'notes', 'details', 'summary']),
+      link: pick(['sourceurl', 'producturl', 'productlink', 'url', 'link', 'website'])
     };
   }
   function slug(value, max = 80) {
@@ -132,7 +133,7 @@
     for (const [role, key] of Object.entries(mapping)) if (key && !fields.includes(key)) throw new Error(`The selected ${role} field “${key}” does not exist in this table.`);
     const rows = [], columns = [], cells = [], rowIds = new Set(), columnIds = new Set(), cellIds = new Set(), pairs = new Set();
     const rowByName = new Map(), columnByName = new Map();
-    const mapped = new Set([mapping.id, mapping.row, mapping.column, mapping.image, mapping.description].filter(Boolean));
+    const mapped = new Set([mapping.id, mapping.row, mapping.column, mapping.image, mapping.description, mapping.link].filter(Boolean));
     for (const [index, record] of records.entries()) {
       const rowName = label(mapping.row ? record[mapping.row] : undefined, `Item ${index + 1}`);
       const columnName = label(mapping.column ? record[mapping.column] : undefined, 'Preview');
@@ -161,6 +162,7 @@
       const attributes = Object.fromEntries(Object.entries(record).filter(([key]) => !mapped.has(key)));
       const cell = {id, row: row.id, column: column.id, status: src ? 'ready' : 'pending'};
       if (mapping.description && label(record[mapping.description], '')) cell.description = String(record[mapping.description]);
+      if (mapping.link && record[mapping.link] !== undefined && record[mapping.link] !== null && record[mapping.link] !== '') cell.sourceUrl = record[mapping.link];
       if (src) cell.src = src;
       if (Object.keys(attributes).length) cell.attributes = attributes;
       cells.push(cell);
@@ -187,7 +189,7 @@
     const columns = own(raw, 'columns') ? raw.columns : raw.beards;
     const axis = (entries, path) => Array.isArray(entries) ? entries.map((entry, index) => {
       if (!plain(entry)) return entry;
-      const attributes = extras(entry, ['id', 'name', 'description', 'source', 'referenceCaption', 'attributes'], `${path}[${index}]`, entry.attributes);
+      const attributes = extras(entry, ['id', 'name', 'description', 'source', 'sourceUrl', 'referenceCaption', 'attributes'], `${path}[${index}]`, entry.attributes);
       return {...entry, ...(Object.keys(attributes).length ? {attributes} : {})};
     }) : entries;
     const meta = plain(raw.meta) ? raw.meta : {};
@@ -195,7 +197,7 @@
     const metaExtras = extras(meta, ['id', 'updatedAt', 'ready', 'total', 'title', 'goal', 'rowsLabel', 'columnsLabel', 'presentation'], 'data.meta');
     const cells = Array.isArray(raw.cells) ? raw.cells.map((entry, index) => {
       if (!plain(entry)) return entry;
-      const attributes = extras(entry, ['id', 'row', 'column', 'haircut', 'beard', 'status', 'src', 'detail', 'description', 'attributes'], `data.cells[${index}]`, entry.attributes);
+      const attributes = extras(entry, ['id', 'row', 'column', 'haircut', 'beard', 'status', 'src', 'detail', 'description', 'sourceUrl', 'attributes'], `data.cells[${index}]`, entry.attributes);
       for (const [key, value] of Object.entries(inherited)) attributes[`dataset.${key}`] = value;
       for (const [key, value] of Object.entries(metaExtras)) attributes[`meta.${key}`] = value;
       const cell = {...entry, row: own(entry, 'row') ? entry.row : entry.haircut, column: own(entry, 'column') ? entry.column : entry.beard};
@@ -281,7 +283,7 @@
     const controls = el('div'); controls.hidden = true;
     const tableSelect = el('select', 'ws-input'), tableField = field('Table to use', tableSelect, 'ds-table');
     const mappingPane = el('div'), selectors = {};
-    const roles = [['id', 'Record ID', 'Generate IDs'], ['row', 'Row / name', 'One row per record'], ['column', 'Column / variant', 'One Preview column'], ['image', 'Image', 'No images yet'], ['description', 'Description', 'No description field']];
+    const roles = [['id', 'Record ID', 'Generate IDs'], ['row', 'Row / name', 'One row per record'], ['column', 'Column / variant', 'One Preview column'], ['image', 'Image', 'No images yet'], ['description', 'Description', 'No description field'], ['link', 'Product / source link', 'No source link']];
     for (const [role, name] of roles) { const select = el('select', 'ws-input'); selectors[role] = select; mappingPane.append(field(name, select, `ds-${role}`)); }
     const titleInput = textInput('Imported dataset'); titleInput.maxLength = 120;
     const rowLabel = textInput('Items'), columnLabel = textInput('Variants'); rowLabel.maxLength = columnLabel.maxLength = 60;

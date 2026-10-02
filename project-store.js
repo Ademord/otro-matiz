@@ -21,6 +21,8 @@
 (function (root) {
   'use strict';
 
+  const sourceLinks = root.SourceLinks || (typeof require === 'function' ? require('./source-links.js') : null);
+
   const SCHEMA_VERSION = 2;
   const DB_NAME = 'otro-matiz-studio';
   const DB_VERSION = 1;
@@ -60,7 +62,8 @@
     annotationText: 240,
     attributes: 32,
     attributeKey: 80,
-    attributeText: 1000
+    attributeText: 1000,
+    sourceUrl: 2048
   });
 
   const CELL_STATUSES = ['ready', 'pending'];
@@ -283,6 +286,18 @@
     return value.startsWith('./') ? value.slice(2) : value;
   }
 
+  function optionalSourceUrl(ctx, target, value, path) {
+    if (value === undefined || value === null || value === '') return;
+    const problem = sourceLinks ? sourceLinks.problem(value) : 'source link validation is unavailable';
+    if (problem) {
+      repairOr(ctx, path, `unsafe source URL (${problem})`);
+      return;
+    }
+    const normalized = sourceLinks.normalize(value);
+    count(ctx, normalized.length);
+    target.sourceUrl = normalized;
+  }
+
   function timestamp(value) {
     if (typeof value === 'string' && value.length <= 40) {
       const time = Date.parse(value);
@@ -334,6 +349,7 @@
       optionalText(ctx, entry, 'referenceCaption', field(raw, 'referenceCaption'), `${itemPath}.referenceCaption`, LIMITS.caption, false);
       const source = field(raw, 'source');
       if (source !== undefined && source !== null && source !== '') entry.source = assetUrl(ctx, source, `${itemPath}.source`);
+      if (path === 'data.rows') optionalSourceUrl(ctx, entry, field(raw, 'sourceUrl'), `${itemPath}.sourceUrl`);
       const attributes = buildAttributes(ctx, field(raw, 'attributes'), `${itemPath}.attributes`);
       if (attributes !== undefined) entry.attributes = attributes;
       return entry;
@@ -430,6 +446,7 @@
       }
       const cell = { id, row, column, status };
       optionalText(ctx, cell, 'description', field(raw, 'description'), `${path}.description`, LIMITS.description, true);
+      optionalSourceUrl(ctx, cell, field(raw, 'sourceUrl'), `${path}.sourceUrl`);
       for (const key of ['src', 'detail']) {
         const image = field(raw, key);
         if (image !== undefined && image !== null && image !== '') cell[key] = assetUrl(ctx, image, `${path}.${key}`);
@@ -801,7 +818,7 @@
       taken.add(id);
       const entry = { id, name: name.trim() };
       if (isPlainObject(item)) {
-        for (const key of ['description', 'source', 'referenceCaption', 'attributes']) {
+        for (const key of ['description', 'source', 'sourceUrl', 'referenceCaption', 'attributes']) {
           if (hasOwn(item, key)) entry[key] = item[key];
         }
       }

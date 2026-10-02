@@ -338,7 +338,13 @@
     open.addEventListener('click', () => app.openViewer([cell], open));
     const star = makeStar(id);
     const caption = element('p', 'fav-caption');
-    caption.append(element('strong', '', n.row), element('span', '', n.column));
+    const title = element('strong', '', n.row);
+    const source = app.createSourceLink?.(cell, 'source-link--icon fav-source-link');
+    if (source) {
+      source.dataset.favRole = 'source';
+      const heading = element('span', 'fav-title-row'); heading.append(title, source); caption.append(heading);
+    } else caption.append(title);
+    caption.append(element('span', '', n.column));
     const select = button('fav-select');
     select.dataset.favRole = 'select';
     select.setAttribute('aria-label', `Select ${label} for comparison`);
@@ -349,7 +355,7 @@
     select.addEventListener('click', () => app.toggleSelection(cell));
     card.append(open, pick, star, caption, select);
     li.append(card);
-    const entry = { li, card, open, star, select, mark, selectLabel, box, image: img };
+    const entry = { li, card, open, star, select, mark, selectLabel, box, source, image: img };
     syncFraming(entry, id);
     return entry;
   }

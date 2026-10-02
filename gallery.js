@@ -34,6 +34,34 @@
     return { row: rows.get(cell.row)?.name || cell.row, column: columns.get(cell.column)?.name || cell.column };
   }
   function describe(cell) { const n = names(cell); return `${n.row} · ${n.column}`; }
+  function createSourceLink(cell, className = 'source-link--icon', text = '') {
+    const href = window.SourceLinks?.resolve(cell, rows.get(cell?.row));
+    if (!href) return null;
+    const link = element('a', `source-link ${className}`);
+    link.href = href;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.setAttribute('aria-label', `Open source for ${describe(cell)} (opens in a new tab)`);
+    link.title = `Open source · ${new URL(href).hostname}`;
+    const mark = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    mark.setAttribute('class', 'source-link-glyph');
+    mark.setAttribute('viewBox', '0 0 24 24');
+    mark.setAttribute('fill', 'none');
+    mark.setAttribute('stroke', 'currentColor');
+    mark.setAttribute('stroke-width', '1.8');
+    mark.setAttribute('stroke-linecap', 'round');
+    mark.setAttribute('stroke-linejoin', 'round');
+    mark.setAttribute('aria-hidden', 'true');
+    mark.setAttribute('focusable', 'false');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', 'M14 3h7v7M21 3l-9 9M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5');
+    mark.append(path);
+    link.append(mark);
+    if (text) link.append(element('span', 'source-link-label', text));
+    // Retain native link navigation, including keyboard activation and context menus.
+    link.addEventListener('click', event => event.stopPropagation());
+    return link;
+  }
   function announce(text) { $('announcement').textContent = text; }
   function axisLabels(project) {
     if (!project) {
@@ -64,7 +92,7 @@
     if (!cell?.src || failed.has(id)) return false;
     failed.add(id);
     selected.delete(id);
-    containers.get(id)?.replaceChildren(pendingCard('Image unavailable'));
+    containers.get(id)?.replaceChildren(pendingCard('Image unavailable', cell));
     selectButtons.delete(id);
     cards.delete(id);
     updateCounts();
@@ -73,11 +101,13 @@
     return true;
   }
 
-  function pendingCard(message = 'Pending') {
+  function pendingCard(message = 'Pending', cell) {
     const pending = element('div', 'pending-card');
     const mark = element('span', 'pending-mark', message === 'Pending' ? '·' : '!');
     mark.setAttribute('aria-hidden', 'true');
     pending.append(mark, element('span', 'pending-word', message));
+    const source = cell && createSourceLink(cell, 'source-link--icon matrix-source-link');
+    if (source) pending.append(source);
     return pending;
   }
 
@@ -128,7 +158,7 @@
       if (cell) { td.dataset.cellId = cell.id; containers.set(cell.id, td); }
       td.setAttribute('aria-label', `${rowOption.name}, ${columnOption.name}`);
       if (!isReady(cell)) {
-        td.append(pendingCard());
+        td.append(pendingCard('Pending', cell || { row: rowOption.id, column: columnOption.id }));
         row.append(td);
         continue;
       }
@@ -157,6 +187,8 @@
       selectButtons.set(cell.id, select);
       cards.set(cell.id, card);
       card.append(open, select);
+      const source = createSourceLink(cell, 'source-link--icon matrix-source-link');
+      if (source) card.append(source);
       td.append(card);
       row.append(td);
     }
@@ -331,5 +363,5 @@
     if (!Number.isNaN(date.getTime())) $('updated-at').textContent = `Updated ${date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
   }
   updateCounts();
-  window.MATRIX_APP = Object.freeze({data,cells,rows,columns,cards,selectButtons,selected,isReady,describe,names,toggleSelection,updateSelection,openViewer,announce,markImageFailed,getViewerCells: () => viewerCells.slice()});
+  window.MATRIX_APP = Object.freeze({data,cells,rows,columns,cards,selectButtons,selected,isReady,describe,names,createSourceLink,toggleSelection,updateSelection,openViewer,announce,markImageFailed,getViewerCells: () => viewerCells.slice()});
 })();

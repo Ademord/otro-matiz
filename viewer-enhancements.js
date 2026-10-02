@@ -148,6 +148,11 @@
       const cell = shown[index];
       if (!cell || figure.querySelector('.vex-actions')) return;
       const actions = element('div', 'vex-actions');
+      const source = app.createSourceLink?.(cell, 'vex-source', 'Open source');
+      if (source) {
+        source.dataset.vexFocus = `source-${index}`;
+        actions.append(source);
+      }
       if (favoritesApi()) {
         const star = element('button', 'vex-fav');
         star.type = 'button';

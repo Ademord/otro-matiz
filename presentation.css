@@ -46,6 +46,8 @@ body[data-gallery-framing=full] .look-open img { height:auto; object-fit:contain
 .look-star[aria-pressed=true] { background:#dce7ed; border-color:#dce7ed; color:#14222c; }
 .look-star[aria-pressed=true] svg { fill:currentColor; }
 .look-caption { padding:clamp(10px,1.2vw,18px); display:flex; flex-direction:column; flex:1; min-width:0; }
+.look-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin:0 0 14px; }
+.look-heading .look-title { flex:1; min-width:0; margin:0; }
 .look-title { font-size:clamp(16px,1.4vw,22px); line-height:1.25; font-weight:650; margin:0 0 14px; overflow-wrap:anywhere; }
 .look-index { color:#83949f; font-weight:500; font-variant-numeric:tabular-nums; }
 .look-metadata { display:grid; gap:6px; list-style:none; padding:0; margin:0 0 14px; font-size:14px; line-height:1.45; }

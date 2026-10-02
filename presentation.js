@@ -306,7 +306,11 @@
       const caption = el('div', 'look-caption');
       const title = el('h3', 'look-title');
       const name = app.data.columns.length === 1 ? row.name : app.data.rows.length === 1 ? col.name : `${row.name} · ${col.name}`;
-      title.append(el('span', 'look-index', String(++optionIndex).padStart(2, '0')), document.createTextNode(` ${name}`)); caption.append(title);
+      title.append(el('span', 'look-index', String(++optionIndex).padStart(2, '0')), document.createTextNode(` ${name}`));
+      const source = app.createSourceLink?.(cell, 'source-link--icon look-source-link');
+      if (source) {
+        const heading = el('div', 'look-heading'); heading.append(title, source); caption.append(heading);
+      } else caption.append(title);
       const metadata = el('ul', 'look-metadata'); metadata.setAttribute('aria-label', 'Specifications'); caption.append(metadata);
       const descriptions = descriptionsFor(cell);
       let description = null;

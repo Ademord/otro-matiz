@@ -1,6 +1,6 @@
 {
   "name": "otro-matiz",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "private": true,
   "description": "Dataset-driven visual decision workspace with local JSON and CSV import",
   "scripts": {
