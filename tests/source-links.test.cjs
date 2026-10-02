@@ -91,7 +91,22 @@ test('record link mappings are suggested and retained separately from variant sp
   assert.deepEqual(project.data.cells.map(cell => cell.sourceUrl), records.map(record => record.product_url));
   assert.deepEqual(project.data.cells.map(cell => cell.attributes), [{price: 30}, {price: 32}]);
   assert.equal(JSON.stringify(records), before);
-  assert.throws(() => importer.prepareProject(importer.parseInput(JSON.stringify([{name: 'Unsafe', link: 'javascript:alert(1)'}])), {}, validator), /sourceUrl: unsafe source URL/);
+  // A mapped link field that is not a safe absolute URL stays a plain attribute instead of refusing the import.
+  const mixed = importer.prepareProject(importer.parseInput('name,website\nWidget,www.acme.com\nGadget,https://acme.com/g\nBad,javascript:alert(1)\n', 'p.csv'), {}, validator).project;
+  assert.deepEqual(mixed.data.cells.map(cell => [cell.sourceUrl, cell.attributes]), [[undefined, {website: 'www.acme.com'}], ['https://acme.com/g', undefined], [undefined, {website: 'javascript:alert(1)'}]]);
+});
+
+test('column source links are kept and used when a cell and its row have none', () => {
+  const data = dataFixture();
+  delete data.rows[0].sourceUrl;
+  data.columns[1].sourceUrl = 'https://example.com/colors/blue';
+  const valid = validateData(data);
+  assert.equal(valid.columns[1].sourceUrl, 'https://example.com/colors/blue');
+  assert.equal(links.resolve(valid.cells[1], valid.rows[0], valid.columns[1]), 'https://example.com/colors/blue');
+  assert.equal(links.resolve(valid.cells[0], valid.rows[0], valid.columns[0]), 'https://example.com/products/item?variant=red');
+  const imported = importer.prepareProject(importer.parseInput(JSON.stringify(data)), {}, validator).project;
+  assert.equal(imported.data.columns[1].sourceUrl, 'https://example.com/colors/blue');
+  assert.equal(imported.data.columns[1].attributes, undefined);
 });
 
 test('CSV and structured imports preserve links but still refuse remote image URLs', () => {

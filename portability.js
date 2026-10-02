@@ -200,7 +200,7 @@ footer{border-top:1px solid var(--line);padding-top:12px;color:var(--muted);font
       const legacy = Object.entries(cell.attributes || {}).find(([key, value]) => key.toLowerCase() === 'description' && typeof value === 'string')?.[1];
       const descriptions = [...new Set([rows.get(cell.row)?.description, columns.get(cell.column)?.description, cell.description || legacy]
         .filter(value => typeof value === 'string' && value.trim()).map(value => value.trim()))];
-      const sourceUrl = window.SourceLinks?.resolve(cell, rows.get(cell.row)) || '';
+      const sourceUrl = window.SourceLinks?.resolve(cell, rows.get(cell.row), columns.get(cell.column)) || '';
       return { cell, ...names, descriptions, sourceUrl, status: STATUS_LABELS[decision.status] ? decision.status : 'unreviewed', favorite: favorites.has(id), note: typeof decision.note === 'string' ? decision.note.trim() : '' };
     });
     const embedder = makeEmbedder(options.onProgress);
@@ -255,7 +255,16 @@ ${figures}
 
   const GALLERY_CSS = `:root{color-scheme:dark;--ink:#ededee;--muted:#a6a6ad;--line:#34343a;--paper:#171719;--accent:#dcdce1}
 *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}main{max-width:1480px;margin:auto;padding:36px clamp(16px,4vw,64px) 48px}header{max-width:850px;margin-bottom:28px}.kicker{font-size:11px;text-transform:uppercase;letter-spacing:.13em;color:var(--muted);margin:0 0 8px}h1{font-size:clamp(27px,4vw,42px);font-weight:550;letter-spacing:-.03em;line-height:1.15;margin:0 0 12px}.goal{white-space:pre-line;margin:0 0 12px}.meta,footer{color:var(--muted);font-size:12px}.catalog{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr));gap:28px 20px}.card{min-width:0;break-inside:avoid}.preview{margin:0;background:#202023;border:1px solid var(--line);border-radius:5px;overflow:hidden;aspect-ratio:4/5;display:grid;place-items:center}.preview img{display:block;width:100%;height:100%;object-fit:contain}.pending{padding:24px;text-align:center;color:var(--muted)}h2{font-size:15px;line-height:1.4;font-weight:550;margin:12px 0 3px}.variant{color:var(--muted);font-size:12px;margin:0 0 9px}.card-specs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:3px 10px;margin:0;font-size:12px}dt{color:var(--muted);overflow-wrap:anywhere}dd{margin:0;overflow-wrap:anywhere;white-space:pre-wrap}.description{white-space:pre-line;overflow-wrap:anywhere;margin:12px 0;font-size:13px}details{margin-top:12px;border-top:1px solid var(--line);padding-top:9px}summary{cursor:pointer;color:var(--muted);font-size:12px}summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}details h3{font-size:12px;font-weight:550;margin:14px 0 6px}.detail-image{display:block;width:100%;height:auto;margin-top:12px;border-radius:4px}.pending-status{font-size:11px;color:var(--muted);margin:6px 0}.source-link{display:inline-flex;align-items:center;gap:6px;min-height:40px;margin-top:12px;padding:6px 10px;border:1px solid var(--line);border-radius:5px;background:#202023;color:var(--accent);font-size:12px;text-decoration:none}.source-link svg{flex:none}.source-link:focus-visible{outline:2px solid var(--accent);outline-offset:4px}.source-link-notice{font-size:11px;color:var(--muted)}footer{border-top:1px solid var(--line);margin-top:34px;padding-top:14px}@media print{body{background:white;color:black}.catalog{grid-template-columns:repeat(3,1fr)}main{padding:0}.preview{background:#f6f6f6}details{display:block}footer{break-inside:avoid}}`;
-  const PRIVATE_DATA_KEYS = new Set(['privatenote', 'privatenotes', 'recipient', 'recipientname', 'profile', 'decisions', 'favorites', 'annotations', 'brief']);
+  // Attribute names that never reach a gallery. Plain specification names such as "Profile" or "Brief" are
+  // ordinary product data, so the workspace-state list only applies to namespaced keys ("dataset.x", "meta.x")
+  // that the structured importer creates from a legacy project file's top-level fields.
+  const PRIVATE_NOTE_KEYS = new Set(['privatenote', 'privatenotes']);
+  const PRIVATE_NAMESPACED_KEYS = new Set([...PRIVATE_NOTE_KEYS, 'recipient', 'recipientname', 'profile', 'decisions', 'favorites', 'annotations', 'brief']);
+  function isPrivateAttribute(key) {
+    const parts = key.toLowerCase().split(/[./]/).map(part => part.replace(/[^a-z]/g, ''));
+    if (parts.length === 1) return PRIVATE_NOTE_KEYS.has(parts[0]);
+    return parts.some(part => PRIVATE_NAMESPACED_KEYS.has(part));
+  }
   const scalar = value => value === null || typeof value === 'string' || typeof value === 'boolean' || (typeof value === 'number' && Number.isFinite(value));
 
   function publicAttributes(raw, path) {
@@ -265,8 +274,7 @@ ${figures}
     if (entries.length > 32) throw new Error(`${path} has more than 32 specifications.`);
     const result = {};
     for (const [key, value] of entries) {
-      const reserved = key.toLowerCase().split(/[./]/).some(part => PRIVATE_DATA_KEYS.has(part.replace(/[^a-z]/g, '')));
-      if (reserved) continue;
+      if (isPrivateAttribute(key)) continue;
       if (!key || key.length > 80 || ['__proto__', 'prototype', 'constructor'].includes(key) || /[\u0000-\u001f\u007f-\u009f]/.test(key)) throw new Error(`${path} contains an unsafe specification name.`);
       if (!scalar(value) || (typeof value === 'string' && value.length > 1000)) throw new Error(`${path}.${key} must be bounded scalar text, a finite number, a boolean or null.`);
       result[key] = value;
@@ -322,7 +330,7 @@ ${figures}
         if (referenceCaption) clean.referenceCaption = referenceCaption;
         const source = galleryImage(item.source, `${scope}[${index}].source`);
         if (source) clean.source = source;
-        const sourceUrl = scope === 'rows' ? window.SourceLinks?.normalize(item.sourceUrl) : '';
+        const sourceUrl = window.SourceLinks?.normalize(item.sourceUrl);
         if (sourceUrl) clean.sourceUrl = sourceUrl;
         const attributes = publicAttributes(item.attributes, `${scope}[${index}].attributes`);
         if (attributes) clean.attributes = attributes;
@@ -393,12 +401,15 @@ ${figures}
       const detailImages = [[cell.detail, `Detail of ${label}`], [row.source, row.referenceCaption || `${row.name} reference`], [column.source, column.referenceCaption || `${column.name} reference`]]
         .filter(([src]) => src).map(([src, alt]) => `<img class="detail-image" src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" loading="lazy">`).join('');
       const details = detailText || allSpecs || detailImages ? `<details><summary>View details</summary>${detailText}${allSpecs}${detailImages}</details>` : '';
-      const sourceUrl = window.SourceLinks?.resolve(cell, row) || '';
+      const sourceUrl = window.SourceLinks?.resolve(cell, row, column) || '';
       const sourceLink = sourceUrl ? `<a class="source-link" href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(`Open source for ${label} (opens in a new tab)`)}">${SOURCE_LINK_ICON}<span>Open source</span><span class="source-link-notice">(new tab)</span></a>` : '';
       const preview = cell.src ? `<img src="${escapeHtml(cell.src)}" alt="${escapeHtml(label)}" loading="lazy" decoding="async">` : '<div class="pending">Preview pending</div>';
       return `<article class="card" data-cell-id="${escapeHtml(cell.id)}"><figure class="preview">${preview}</figure><h2>${escapeHtml(row.name)}</h2><p class="variant">${escapeHtml(column.name)}</p>${cell.status === 'pending' ? '<p class="pending-status">Pending preview</p>' : ''}${specs(visible)}${sourceLink}${details}</article>`;
     }).join('\n');
-    const payload = JSON.stringify(snapshot).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
+    // The payload describes the gallery; the images themselves are only in the <img> tags above, so the file is not doubled.
+    const omitImages = ({src, detail, source, ...rest}) => rest;
+    const payloadData = {...snapshot.data, rows: snapshot.data.rows.map(omitImages), columns: snapshot.data.columns.map(omitImages), cells: snapshot.data.cells.map(omitImages)};
+    const payload = JSON.stringify({...snapshot, data: payloadData}).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
     const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">

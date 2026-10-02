@@ -349,7 +349,7 @@
       optionalText(ctx, entry, 'referenceCaption', field(raw, 'referenceCaption'), `${itemPath}.referenceCaption`, LIMITS.caption, false);
       const source = field(raw, 'source');
       if (source !== undefined && source !== null && source !== '') entry.source = assetUrl(ctx, source, `${itemPath}.source`);
-      if (path === 'data.rows') optionalSourceUrl(ctx, entry, field(raw, 'sourceUrl'), `${itemPath}.sourceUrl`);
+      optionalSourceUrl(ctx, entry, field(raw, 'sourceUrl'), `${itemPath}.sourceUrl`);
       const attributes = buildAttributes(ctx, field(raw, 'attributes'), `${itemPath}.attributes`);
       if (attributes !== undefined) entry.attributes = attributes;
       return entry;

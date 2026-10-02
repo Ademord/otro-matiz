@@ -8,6 +8,7 @@
   'use strict';
   const MAX_BYTES = 300 * 1024 * 1024;
   const MAX_RECORDS = 400;
+  const sourceLinks = root?.SourceLinks || (typeof require === 'function' ? require('./source-links.js') : null);
   const ID = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
   const own = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
   const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value) &&
@@ -162,7 +163,12 @@
       const attributes = Object.fromEntries(Object.entries(record).filter(([key]) => !mapped.has(key)));
       const cell = {id, row: row.id, column: column.id, status: src ? 'ready' : 'pending'};
       if (mapping.description && label(record[mapping.description], '')) cell.description = String(record[mapping.description]);
-      if (mapping.link && record[mapping.link] !== undefined && record[mapping.link] !== null && record[mapping.link] !== '') cell.sourceUrl = record[mapping.link];
+      const link = mapping.link ? record[mapping.link] : undefined;
+      if (link !== undefined && link !== null && link !== '') {
+        // Only safe absolute HTTP(S) values become links; anything else stays a plain attribute, as before the link role existed.
+        if (sourceLinks && !sourceLinks.problem(link)) cell.sourceUrl = link;
+        else attributes[mapping.link] = link;
+      }
       if (src) cell.src = src;
       if (Object.keys(attributes).length) cell.attributes = attributes;
       cells.push(cell);

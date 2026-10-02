@@ -213,10 +213,12 @@ test('single-file galleries embed previews, details and references, preserve pub
   assert.match(html, /<dt>finish<\/dt><dd>Matte<\/dd>/);
   assert.match(html, /target="_blank" rel="noopener noreferrer"/);
   assert.match(html, /opens in a new tab/);
-  assert.ok(payload.data.rows.every(row => !row.source || row.source.startsWith('data:image/')));
-  assert.ok(payload.data.columns.every(column => !column.source || column.source.startsWith('data:image/')));
-  assert.ok(payload.data.cells.every(cell => !cell.src || cell.src.startsWith('data:image/')));
-  assert.equal(payload.data.cells.find(cell => cell.id === 'oak-matte').detail, PNG);
+  // Images are embedded once, in the page itself; the inert payload carries the text and specifications only.
+  assert.ok([...payload.data.rows, ...payload.data.columns].every(item => !('source' in item)));
+  assert.ok(payload.data.cells.every(cell => !('src' in cell) && !('detail' in cell)));
+  assert.equal(payload.data.cells.find(cell => cell.id === 'oak-matte').status, 'ready');
+  assert.doesNotMatch(galleryPayload(html).raw, /data:image/, 'no image data is repeated in the payload');
+  assert.match(html, /<img class="detail-image" src="data:image\/png;base64,/);
   assert.deepEqual(requests.sort(), ['guides/detail.png', 'guides/matte.png', 'guides/oak.png']);
   assert.doesNotMatch(html, /<img[^>]+src="(?:https?:|guides\/)|<link\b|PRIVATE SECRET|Prepared for Designer/);
   assert.equal(JSON.stringify(input), before);
@@ -258,6 +260,10 @@ test('gallery output escapes HTML and inert JSON, omits private state and safely
   assert.match(html, /href="https:\/\/example\.test\/item\?color=red&amp;size=xs"/);
   assert.doesNotMatch(html, /PRIVATE SECRET|ATTRIBUTE SECRET|NAMESPACED PRIVATE|NAMESPACED RECIPIENT|NAMESPACED PROFILE|PROFILE SECRET|Designer|javascript:/);
   assert.deepEqual(payload.value.data.cells.find(cell => cell.id === 'oak-matte').attributes, {public: 'Visible'});
+  // Plain specification names that happen to match workspace fields are ordinary product data and stay.
+  input.data.rows[0].attributes = {Profile: 'All-season', Brief: 'Kurz', Width: '205'};
+  const plain = galleryPayload(await api.buildGallery(input)).value;
+  assert.deepEqual(plain.data.rows[0].attributes, {Profile: 'All-season', Brief: 'Kurz', Width: '205'});
   for (const key of ['decisions', 'favorites', 'annotations', 'brief', 'profile', 'recipient']) assert.equal(payload.value[key], undefined);
   assert.doesNotMatch(payload.raw, /<|\u2028|\u2029/);
   assert.equal(payload.value.data.cells.find(cell => cell.id === 'oak-matte').description, cell.description);

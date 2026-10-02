@@ -32,8 +32,8 @@
   function problem(value) { return inspect(value).reason; }
   /** Return the safe canonical URL, or an empty string for missing/unsafe input. */
   function normalize(value) { return inspect(value).url || ''; }
-  /** A variant's link takes priority over its item's link. Unsafe values never become links. */
-  function resolve(cell, row) { return normalize(cell?.sourceUrl) || normalize(row?.sourceUrl); }
+  /** A cell's link wins over its row's, which wins over its column's. Unsafe values never become links. */
+  function resolve(cell, row, column) { return normalize(cell?.sourceUrl) || normalize(row?.sourceUrl) || normalize(column?.sourceUrl); }
 
   return Object.freeze({problem, normalize, resolve});
 });
