@@ -70,4 +70,9 @@ test('the command writes the gallery and the editable project, and the project r
   const failed = spawnSync(process.execPath, [script, path.join(dir, 'products.csv'), path.join(dir, 'g3.html'), '--map', 'nope=x'], { encoding: 'utf8' });
   assert.equal(failed.status, 1); assert.match(failed.stderr, /--map expects/);
   assert.equal(fs.existsSync(path.join(dir, 'g3.html')), false);
+  const halfway = spawnSync(process.execPath, [script, path.join(dir, 'products.csv'), path.join(dir, 'g4.html'), '--project', path.join(dir, 'missing-dir', 'p.json')], { encoding: 'utf8' });
+  assert.equal(halfway.status, 1);
+  assert.deepEqual(fs.readdirSync(dir).filter(name => name.startsWith('g4.html')), [], 'no gallery or temporary file is left when the project write fails');
+  const table = spawnSync(process.execPath, [script, path.join(dir, 'products.csv'), path.join(dir, 'g5.html'), '--table', 'abc'], { encoding: 'utf8' });
+  assert.equal(table.status, 1); assert.match(table.stderr, /--table expects a table number/);
 });

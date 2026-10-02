@@ -120,7 +120,10 @@ function parseArgs(argv) {
       const [role, ...field] = value.split('=');
       if (!ROLES.includes(role) || !field.length) throw new Error(`--map expects <role>=<field> with a role of ${ROLES.join(', ')}.`);
       options.mapping[role] = field.join('=');
-    } else if (arg === '--table') options.tableIndex = Number.parseInt(value, 10);
+    } else if (arg === '--table') {
+      if (!/^\d+$/.test(value)) throw new Error('--table expects a table number: 0, 1, 2, …');
+      options.tableIndex = Number(value);
+    }
     else if (arg === '--title') options.title = value;
     else if (arg === '--rows-label') options.rowsLabel = value;
     else if (arg === '--columns-label') options.columnsLabel = value;
@@ -142,8 +145,16 @@ async function main(argv) {
     mapping: args.mapping, tableIndex: args.tableIndex, title: args.title, rowsLabel: args.rowsLabel, columnsLabel: args.columnsLabel
   });
   const html = await renderGallery(project);
-  fs.writeFileSync(args.output, html);
-  if (args.projectOut) fs.writeFileSync(args.projectOut, JSON.stringify(project));
+  // Write to temporary files first so a failed write never leaves only one of the outputs behind.
+  const outputs = [[args.output, html], ...(args.projectOut ? [[args.projectOut, JSON.stringify(project)]] : [])]
+    .map(([target, content]) => ({ target, content, temp: `${target}.${process.pid}.tmp` }));
+  try {
+    for (const file of outputs) fs.writeFileSync(file.temp, file.content);
+    for (const file of outputs) fs.renameSync(file.temp, file.target);
+  } catch (error) {
+    for (const file of outputs) fs.rmSync(file.temp, { force: true });
+    throw error;
+  }
   process.stdout.write(JSON.stringify({ html: args.output, bytes: Buffer.byteLength(html), options: project.data.cells.length,
     ready: project.data.meta.ready, project: args.projectOut || null }) + '\n');
 }
