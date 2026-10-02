@@ -33,6 +33,14 @@
 .zoom-controls button { height:36px; min-width:36px; padding:6px 10px; font-size:14px; }
 .zoom-controls .zoom-label { font-size:14px; }
 .matrix-size-label { display:inline-flex; align-items:center; gap:5px; font-size:14px; }
+.source-link { color:var(--accent); touch-action:manipulation; }
+.source-link--icon { display:inline-grid; place-items:center; flex:none; width:40px; height:40px; padding:6px; border:1px solid var(--line); border-radius:7px; background:var(--surface); text-decoration:none; }
+.source-link-glyph { display:block; width:20px; height:20px; flex:none; }
+.source-link--icon:hover { color:var(--ink); background:var(--tint); border-color:var(--accent); }
+.source-link:focus-visible { outline:3px solid #849b79; outline-offset:3px; }
+.matrix-source-link { position:absolute; top:6px; left:6px; z-index:1; }
+.pending-card { position:relative; }
+@media(forced-colors:active) { .source-link--icon { border-color:LinkText; } }
 .matrix-size-label input { height:34px; padding:4px 6px; border:1px solid var(--line); border-radius:5px; background:var(--surface); font-size:16px; font-variant-numeric:tabular-nums; }
 @media(max-width:700px) {
   :root { --row-width:168px; }

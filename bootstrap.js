@@ -2,7 +2,7 @@
 (async () => {
   'use strict';
   const $ = id => document.getElementById(id);
-  const assetVersion = '0.3.7';
+  const assetVersion = '0.3.8';
   const load = src => new Promise((resolve, reject) => {
     const script = document.createElement('script');
     const assetUrl = new URL(src, document.baseURI);

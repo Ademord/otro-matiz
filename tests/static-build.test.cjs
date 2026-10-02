@@ -29,9 +29,10 @@ test('static output contains only declared runtime files and excludes old output
   fs.writeFileSync(path.join(dir, 'README.md'), 'Development documentation');
   fs.writeFileSync(path.join(dir, 'assets/demo/unlisted.png'), 'Not approved');
   const result = buildSite(dir);
-  assert.equal(result.files, 42);
+  assert.equal(result.files, 43);
   assert.equal(result.images, 9);
   assert(fs.existsSync(path.join(dir, 'dist/index.html')));
+  assert(fs.existsSync(path.join(dir, 'dist/source-links.js')), 'Source links must be available in the deployed runtime');
   for (const example of ['color-form', 'product-shades']) assert(fs.existsSync(path.join(dir, 'dist/examples', `${example}.json`)), 'Dataset importer examples must be deployed');
   for (const file of ['obsolete.html', 'exports/private-project.json', 'README.md', 'assets/demo/unlisted.png', 'runtime-manifest.json']) {
     assert(!fs.existsSync(path.join(dir, 'dist', file)), `Excluded: ${file}`);

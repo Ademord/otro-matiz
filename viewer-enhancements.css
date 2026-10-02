@@ -21,6 +21,9 @@
 .vex-save:focus-visible{outline:3px solid #849b79;outline-offset:2px;border-radius:3px}
 .vex-save .vex-glyph{font-size:12px}
 .vex-save-off{font-size:11px;color:var(--muted)}
+.vex-source{display:inline-flex;align-items:center;gap:5px;min-height:40px;padding:6px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface);font-size:11px;text-decoration:none}
+.vex-source:hover{background:var(--tint);border-color:var(--accent)}
+.vex-source .source-link-glyph{width:18px;height:18px}
 .vex-missing{display:grid;place-items:center;min-height:200px;padding:20px;text-align:center;font-size:11px;line-height:1.5;color:var(--muted);background:#f5f6f1;border:1px dashed #dce0d6;border-radius:6px}
 .face-detail .vex-missing{position:absolute;inset:0;min-height:0}
 .vex-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
