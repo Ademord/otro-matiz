@@ -53,6 +53,7 @@ On success the command exits 0 and prints one JSON line. On failure it exits 1, 
 Every other field must be a scalar (text, number, boolean, null) and becomes a specification shown on the card. Flatten nested data before export.
 
 **Images**
+- An image field can also hold an embedded `data:image/png|jpeg|webp;base64,…` URL. Use that when your pipeline already resizes photos in memory. Otherwise use a file path.
 - Paths are relative and must start with `assets/` or `guides/`, for example `assets/tee.png`. They resolve against `--images <dir>`, which defaults to the dataset's folder.
 - Use PNG, JPEG or WebP only, at most 40 MiB each once embedded. Symlinks and paths that leave the folder are refused.
 - **Remote image URLs are refused on purpose.** Download photos yourself, from sources you are allowed to use, then point at the local files.
