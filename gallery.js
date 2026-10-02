@@ -35,7 +35,7 @@
   }
   function describe(cell) { const n = names(cell); return `${n.row} · ${n.column}`; }
   function createSourceLink(cell, className = 'source-link--icon', text = '') {
-    const href = window.SourceLinks?.resolve(cell, rows.get(cell?.row));
+    const href = window.SourceLinks?.resolve(cell, rows.get(cell?.row), columns.get(cell?.column));
     if (!href) return null;
     const link = element('a', `source-link ${className}`);
     link.href = href;
