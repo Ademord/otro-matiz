@@ -6,7 +6,8 @@
   "scripts": {
     "check": "node scripts/check-data.mjs",
     "test": "node --test tests/*.test.cjs",
-    "build": "node scripts/build-site.mjs"
+    "build": "node scripts/build-site.mjs",
+    "gallery": "node scripts/render-gallery.mjs"
   },
   "engines": {
     "node": ">=20"
