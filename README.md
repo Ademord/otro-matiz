@@ -41,6 +41,16 @@ In **Project → Export & import → Gallery to share**, choose **Download galle
 
 The file also contains a non-executable JSON payload with the public gallery data (names, descriptions, specifications and links; the images are embedded once, in the page itself). Recorded decisions, private notes, favorites, annotations and recipient settings are omitted. Images are embedded, and the page loads no external resources; official source links open when the recipient activates them. Open it in the browser used for shopping to use that browser's existing store session. This is a static snapshot; later edits to the original project do not change it. The portable JSON export remains available for continuing an editable project on another device.
 
+## Build a gallery from the command line
+
+Scripts, agents and MCP servers can build the same gallery without opening the app:
+
+```sh
+node scripts/render-gallery.mjs products.csv gallery.html --title "Autumn drop" --project project.json
+```
+
+The command reads records (CSV or JSON), a row/column dataset or a portable project. It embeds local images from the dataset's folder or `--images`, and writes the self-contained gallery HTML. `--project` also writes an editable project to import in the app. It uses the app's own importer, validation and export code, so the same rules and limits apply. See [AGENTS.md](AGENTS.md) for the data contract, the JS API and a working MCP tool example.
+
 ## Evaluate and compare
 
 - Gallery opens as a continuous grid, with the project's title and description above it. Its charcoal palette, responsive page padding, heading proportions and compact cards follow the reference design. Matrix remains available for comparisons across two axes.
@@ -70,7 +80,7 @@ Browser storage belongs to this device and website origin, can be cleared, and i
 
 Run `npm test`, `npm run check` and `npm run build` with Node.js 20 or newer. No dependency installation is needed. Rebuild the neutral demo with `python3 scripts/create-demo.py`.
 
-`project-store.js` validates and saves projects; `lists-store.js` handles named lists. `source-links.js` validates optional outbound references and resolves cell overrides. `bootstrap.js` initializes the active project before loading the UI. `dataset-import.js` reviews file imports. `portability.js`, `generation.js` and `presentation.js` handle local exchange, standalone gallery snapshots, AI handoffs and recipient briefs. The generic demo lives in `data.js`, `examples/color-form.json` and `assets/demo/`.
+`project-store.js` validates and saves projects; `lists-store.js` handles named lists. `source-links.js` validates optional outbound references and resolves cell overrides. `bootstrap.js` initializes the active project before loading the UI. `dataset-import.js` reviews file imports. `portability.js`, `generation.js` and `presentation.js` handle local exchange, standalone gallery snapshots, AI handoffs and recipient briefs. `scripts/render-gallery.mjs` builds gallery snapshots from the command line. The generic demo lives in `data.js`, `examples/color-form.json` and `assets/demo/`.
 
 ## Editions and publication
 
