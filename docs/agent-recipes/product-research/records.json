@@ -108,8 +108,44 @@
     "product_url": "https://www.castelijnenbeerens.com/nl/firenze-rugzak-156-tablet-zwart.html"
   },
   {
-    "id": "piquadro-urban",
+    "id": "cb-victor",
     "rank": 7,
+    "verdict": "Added on request, cleanest C&B",
+    "name": "Castelijn & Beerens Nappa X Victor 15.6 inch, black",
+    "image": "",
+    "description": "All-black smooth nappa with black metal hardware and an embossed logo: the cleanest Castelijn & Beerens here, from the brand's tech collection. Heavier than the Specials. German address only.",
+    "price_switzerland": "No Swiss shipping; Wardow CH does not list the Victor",
+    "price_germany": "EUR 350 at castelijnenbeerens.com, free shipping to Germany",
+    "laptop_fit": "15.6 inch laptop compartment plus tablet pocket, RFID",
+    "dimensions": "31 x 13 x 42 cm",
+    "weight": "1.46 kg",
+    "material": "Nappa leather, LWG-certified tannery",
+    "branding": "Small embossed logo, black zips and hardware",
+    "availability": "In stock, black; green exists. Article 40 9576 ZW. Checked 2026-10-15",
+    "shop": "castelijnenbeerens.com",
+    "product_url": "https://www.castelijnenbeerens.com/nl/victor-rugzak-156-tablet-zwart.html"
+  },
+  {
+    "id": "cb-rien-natural",
+    "rank": 8,
+    "verdict": "Added on request as the closest match to 'Nastra'",
+    "name": "Castelijn & Beerens Rien 15.6 inch, natural",
+    "image": "",
+    "description": "Hand-dyed vegetable-tanned bull leather in a light tan that darkens with use, buckle flap pocket, rain cover included. Big discount at Wardow CH. Not a quiet colour, so it stands out at work. No C&B line is called Nastra; swap this if you meant another model.",
+    "price_switzerland": "CHF 227.40 delivered, Wardow CH (list CHF 379), VAT and duties included",
+    "price_germany": "EUR 284.25 at castelijnenbeerens.com (list EUR 379), free shipping to Germany",
+    "laptop_fit": "15.6 inch laptop compartment plus tablet pocket (brand); padded 15 inch compartment (Wardow)",
+    "dimensions": "31.5 x 10 x 40 cm",
+    "weight": "1.4 kg",
+    "material": "Vegetable-tanned bull leather, hand-dyed",
+    "branding": "Small embossed logo, dark brown bridle-leather handle and straps",
+    "availability": "In stock at the brand (article 52 9576 NT) and listed at Wardow CH. Checked 2026-10-15",
+    "shop": "ch.wardow.com",
+    "product_url": "https://ch.wardow.com/products/castelijn-beerens-rien-rucksack-529576nt"
+  },
+  {
+    "id": "piquadro-urban",
+    "rank": 9,
     "verdict": "Also verified, lightest Piquadro",
     "name": "Piquadro Urban CA6384UB00, black, expandable",
     "image": "",
@@ -127,7 +163,7 @@
   },
   {
     "id": "piquadro-harper",
-    "rank": 8,
+    "rank": 10,
     "verdict": "Also verified, plainest Piquadro",
     "name": "Piquadro Harper CA6645AP travel, black",
     "image": "",
@@ -145,7 +181,7 @@
   },
   {
     "id": "braun-bueffel-novara",
-    "rank": 9,
+    "rank": 11,
     "verdict": "Also verified, tight on width",
     "name": "Braun Büffel Novara, black",
     "image": "",
@@ -163,7 +199,7 @@
   },
   {
     "id": "jost-pack",
-    "rank": 10,
+    "rank": 12,
     "verdict": "Also verified, brown only",
     "name": "Jost Pack 6746 Lund, brown",
     "image": "",
@@ -181,7 +217,7 @@
   },
   {
     "id": "harolds-campo",
-    "rank": 11,
+    "rank": 13,
     "verdict": "Also verified, rustic",
     "name": "Harold's Campo Notebook Rucksack, black",
     "image": "",
@@ -199,7 +235,7 @@
   },
   {
     "id": "dudu-new-york",
-    "rank": 12,
+    "rank": 14,
     "verdict": "Budget option",
     "name": "DuDu New York 534-6058, black",
     "image": "",
@@ -217,7 +253,7 @@
   },
   {
     "id": "lacoste-chantaco",
-    "rank": 13,
+    "rank": 15,
     "verdict": "Budget option, casual",
     "name": "Lacoste Chantaco NH3269CE, noir",
     "image": "",
@@ -235,7 +271,7 @@
   },
   {
     "id": "brics-torino-l",
-    "rank": 14,
+    "rank": 16,
     "verdict": "Budget option, big and heavy",
     "name": "Bric's Torino L BR107701, black",
     "image": "",
