@@ -121,6 +121,14 @@ Errors thrown by `prepareProject` and `renderGallery` are plain-language message
 
 The snippet was checked end to end with `@modelcontextprotocol/sdk` 1.32 and `zod` 4 through a stdio client.
 
+## Recipes
+
+Step-by-step guides for recurring agent jobs that end in a gallery live in [`docs/agent-recipes/`](docs/agent-recipes/README.md). Each names the exact commands, the record fields that worked and the checks to run before handing the file over, and a test keeps its example rendering.
+
+| Recipe | Use it when |
+|---|---|
+| [Product research to gallery](docs/agent-recipes/product-research-to-gallery.md) | You verified a shortlist of products (price, fit, stock, photos, shop links) and want to hand over one HTML file with ranked cards |
+
 ## Where things are
 
 | File | Role |
@@ -132,5 +140,6 @@ The snippet was checked end to end with `@modelcontextprotocol/sdk` 1.32 and `zo
 | `source-links.js` | Which product links are accepted |
 | `portability.js` | `buildGallery`: the HTML snapshot, its CSP and its inert JSON payload |
 | `examples/` | Neutral sample datasets |
+| `docs/agent-recipes/` | Recipes for agents, with worked examples; `tests/agent-recipes.test.cjs` renders them |
 
 Changes to validation or the gallery format belong in those core files, so the app and the command stay identical. Run `npm test`, `npm run check` and `npm run build` before a pull request.

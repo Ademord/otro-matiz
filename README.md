@@ -49,7 +49,7 @@ Scripts, agents and MCP servers can build the same gallery without opening the a
 node scripts/render-gallery.mjs products.csv gallery.html --title "Autumn drop" --project project.json
 ```
 
-The command reads records (CSV or JSON), a row/column dataset or a portable project. It embeds local images from the dataset's folder or `--images`, and writes the self-contained gallery HTML. `--project` also writes an editable project to import in the app. It uses the app's own importer, validation and export code, so the same rules and limits apply. See [AGENTS.md](AGENTS.md) for the data contract, the JS API and a working MCP tool example.
+The command reads records (CSV or JSON), a row/column dataset or a portable project. It embeds local images from the dataset's folder or `--images`, and writes the self-contained gallery HTML. `--project` also writes an editable project to import in the app. It uses the app's own importer, validation and export code, so the same rules and limits apply. See [AGENTS.md](AGENTS.md) for the data contract, the JS API and a working MCP tool example. A worked recipe for turning verified product research into a gallery, with the record fields and the checks to run, is in [docs/agent-recipes/](docs/agent-recipes/README.md).
 
 ## Evaluate and compare
 
