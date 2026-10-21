@@ -51,6 +51,8 @@ node scripts/render-gallery.mjs products.csv gallery.html --title "Autumn drop" 
 
 The command reads records (CSV or JSON), a row/column dataset or a portable project. It embeds local images from the dataset's folder or `--images`, and writes the self-contained gallery HTML. `--project` also writes an editable project to import in the app. It uses the app's own importer, validation and export code, so the same rules and limits apply. See [AGENTS.md](AGENTS.md) for the data contract, the JS API and a working MCP tool example.
 
+For another local interface, add `--catalog cards.json` or call `createCardCatalog(project)` from the same script. This returns a versioned flat card model with stable IDs, descriptions, source links, image references, specifications and completeness counts. It preserves pending cards and applies the gallery privacy rules. A learning deck, directory or connector adapter can consume this model without parsing HTML or copying the core modules. These outputs remain local until you explicitly share them.
+
 ## Evaluate and compare
 
 - Gallery opens as a continuous grid, with the project's title and description above it. Its charcoal palette, responsive page padding, heading proportions and compact cards follow the reference design. Matrix remains available for comparisons across two axes.

@@ -370,6 +370,38 @@ ${figures}
       rowsLabel: galleryText(project.rowsLabel, 60, 'Items'), columnsLabel: galleryText(project.columnsLabel, 60, 'Variants'), data: {rows, columns, cells, meta}};
   }
 
+  /** Public card-data adapter for agent integrations and alternate local views.
+   * Uses the gallery's existing validation/privacy boundary; never exposes workspace state.
+   * It does not fetch images or mutate the project. Use embedded images for portable output.
+   */
+  function createCardCatalog(project) {
+    const snapshot = publicGallery(project);
+    const rows = new Map(snapshot.data.rows.map(row => [row.id, row]));
+    const columns = new Map(snapshot.data.columns.map(column => [column.id, column]));
+    const selected = snapshot.data.meta.presentation?.metadataFields;
+    const cards = snapshot.data.cells.map(cell => {
+      const row = rows.get(cell.row), column = columns.get(cell.column);
+      const legacy = Object.entries(cell.attributes || {}).find(([key, value]) => key.toLowerCase() === 'description' && typeof value === 'string')?.[1];
+      const descriptions = [...new Set([row.description, column.description, cell.description || legacy].filter(Boolean))];
+      const specifications = [['row', row.attributes], ['column', column.attributes], ['cell', cell.attributes]].flatMap(([scope, attributes]) =>
+        Object.entries(attributes || {}).filter(([key, value]) => !(scope === 'cell' && key.toLowerCase() === 'description' && typeof value === 'string'))
+          .map(([key, value]) => ({key: `${scope}.${key}`, label: key, value, scope})));
+      const displaySpecifications = Array.isArray(selected)
+        ? selected.map(key => specifications.find(entry => entry.key === key)).filter(Boolean)
+        : specifications.filter(entry => entry.value !== null && String(entry.value).trim()).slice(0, 4);
+      return {id: cell.id, rowId: row.id, columnId: column.id, title: row.name, variant: column.name,
+        status: cell.status, descriptions, sourceUrl: window.SourceLinks?.resolve(cell, row, column) || null,
+        images: {primary: cell.src || null, detail: cell.detail || null, rowReference: row.source || null, columnReference: column.source || null},
+        specifications, displaySpecifications};
+    });
+    const catalog = {format: 'otro-matiz-card-catalog-v1', title: snapshot.title, goal: snapshot.goal,
+      rowsLabel: snapshot.rowsLabel, columnsLabel: snapshot.columnsLabel,
+      summary: {total: cards.length, ready: cards.filter(card => card.status === 'ready').length,
+        pending: cards.filter(card => card.status === 'pending').length, withImages: cards.filter(card => card.images.primary).length}, cards};
+    gallerySize(JSON.stringify(catalog));
+    return catalog;
+  }
+
   /** One portable, public gallery. Native details/links work offline; no app import or executable script is required. */
   async function buildGallery(project, options = {}) {
     const snapshot = publicGallery(project);
@@ -936,7 +968,7 @@ ${figures}
     openListBrief(listId);
   });
 
-  window.StudioPortability = Object.freeze({ embedProject, buildBrief, buildGallery, candidates, listCandidates, openListBrief });
+  window.StudioPortability = Object.freeze({ embedProject, buildBrief, buildGallery, createCardCatalog, candidates, listCandidates, openListBrief });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount, { once: true });
   else mount();
 })();

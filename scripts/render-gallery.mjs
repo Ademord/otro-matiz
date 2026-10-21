@@ -93,6 +93,11 @@ export async function renderGallery(project, { date } = {}) {
   return loadPortability().buildGallery(validateProject(project), date ? { date } : {});
 }
 
+/** Public, flat card data for local learning views, directories and connector adapters. */
+export function createCardCatalog(project) {
+  return loadPortability().createCardCatalog(validateProject(project));
+}
+
 const USAGE = `Usage: node scripts/render-gallery.mjs <dataset.json|dataset.csv> <gallery.html> [options]
 
 Options:
@@ -103,9 +108,10 @@ Options:
   --rows-label <text>     Name for rows (default "Items")
   --columns-label <text>  Name for columns (default "Variants")
   --project <file.json>   Also write the editable project, importable in the app
+  --catalog <file.json>   Also write public card data for another local view or adapter
   --help                  Show this help
 
-Prints one JSON line on success: {"html", "bytes", "options", "ready", "project"}.`;
+Prints one JSON line on success: {"html", "bytes", "options", "ready", "project"}, plus "catalog" when requested.`;
 
 function parseArgs(argv) {
   const options = { mapping: {} }, positional = [];
@@ -127,16 +133,40 @@ function parseArgs(argv) {
     else if (arg === '--title') options.title = value;
     else if (arg === '--rows-label') options.rowsLabel = value;
     else if (arg === '--columns-label') options.columnsLabel = value;
-    else if (arg === '--project') options.projectOut = value;
+    else if (arg === '--project' || arg === '--catalog') {
+      if (!value) throw new Error(`${arg} needs a non-empty file path.`);
+      options[arg === '--project' ? 'projectOut' : 'catalogOut'] = value;
+    }
     else throw new Error(`Unknown option ${arg}.`);
   }
-  if (positional.length !== 2) throw new Error('Give one dataset file and one output HTML file.');
+  if (positional.length !== 2 || positional.some(value => !value)) throw new Error('Give one non-empty dataset path and one non-empty output HTML path.');
   return { ...options, input: positional[0], output: positional[1] };
+}
+
+// Resolve the parent as well as the filename: lexical paths can alias the input
+// or another output through a symlinked directory. Never replace an output symlink.
+function outputPath(target) {
+  const absolute = path.resolve(target);
+  const resolved = path.join(fs.realpathSync(path.dirname(absolute)), path.basename(absolute));
+  let stat;
+  try { stat = fs.lstatSync(resolved); }
+  catch (error) { if (error.code !== 'ENOENT') throw error; }
+  if (stat && !stat.isFile()) throw new Error('Output targets must be regular files, not directories or symbolic links.');
+  return resolved;
 }
 
 async function main(argv) {
   const args = parseArgs(argv);
   if (args.help) { process.stdout.write(USAGE + '\n'); return; }
+  const targets = [args.output, args.projectOut, args.catalogOut].filter(Boolean).map(outputPath);
+  // File identity also catches hard links and case aliases on case-insensitive volumes.
+  const identities = [args.input, ...targets].filter(target => fs.existsSync(target)).map(target => {
+    const stat = fs.statSync(target);
+    return `${stat.dev}:${stat.ino}`;
+  });
+  if (new Set(targets).size !== targets.length || targets.includes(fs.realpathSync(args.input)) || new Set(identities).size !== identities.length) {
+    throw new Error('Input, gallery, project and catalog files must have distinct paths.');
+  }
   const stat = fs.statSync(args.input);
   if (stat.size > DatasetImport.MAX_BYTES) throw new Error('The dataset exceeds the 300 MiB file limit.');
   const project = prepareProject({
@@ -145,9 +175,11 @@ async function main(argv) {
     mapping: args.mapping, tableIndex: args.tableIndex, title: args.title, rowsLabel: args.rowsLabel, columnsLabel: args.columnsLabel
   });
   const html = await renderGallery(project);
-  // Write to temporary files first so a failed write never leaves only one of the outputs behind.
-  const outputs = [[args.output, html], ...(args.projectOut ? [[args.projectOut, JSON.stringify(project)]] : [])]
-    .map(([target, content]) => ({ target, content, temp: `${target}.${process.pid}.tmp` }));
+  const catalog = args.catalogOut ? JSON.stringify(createCardCatalog(project)) : null;
+  // Stage every file before publishing outputs; preflight rejects invalid/aliased destinations.
+  const outputs = [[args.output, html], ...(args.projectOut ? [[args.projectOut, JSON.stringify(project)]] : []),
+    ...(args.catalogOut ? [[args.catalogOut, catalog]] : [])]
+    .map(([, content], index) => ({ target: targets[index], content, temp: `${targets[index]}.${process.pid}.tmp` }));
   try {
     for (const file of outputs) fs.writeFileSync(file.temp, file.content);
     for (const file of outputs) fs.renameSync(file.temp, file.target);
@@ -156,7 +188,7 @@ async function main(argv) {
     throw error;
   }
   process.stdout.write(JSON.stringify({ html: args.output, bytes: Buffer.byteLength(html), options: project.data.cells.length,
-    ready: project.data.meta.ready, project: args.projectOut || null }) + '\n');
+    ready: project.data.meta.ready, project: args.projectOut || null, ...(args.catalogOut ? {catalog: args.catalogOut} : {}) }) + '\n');
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(fs.realpathSync(process.argv[1])).href) {

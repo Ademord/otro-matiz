@@ -9,6 +9,7 @@ This file is for coding agents, scripts and MCP servers that want to **fill Otro
 | Records + photos → one HTML file to send to friends | `node scripts/render-gallery.mjs` (or `npm run gallery --`) |
 | Records + photos → editable project the user opens in the app | same command with `--project out.json`, then **Project → Export & import → Import a project** in the app |
 | Call it from your own Node code | `import { prepareProject, renderGallery } from './scripts/render-gallery.mjs'` |
+| Validated records → card data for another view or connector | `createCardCatalog(project)` or `--catalog cards.json` |
 
 The command runs the app's own importer (`dataset-import.js`), validator (`project-store.js`) and gallery exporter (`portability.js` → `buildGallery`). A file made here is the same as **Download gallery HTML** in the app. Don't copy those modules into another repo: call this script from a checkout pinned to a commit or tag.
 
@@ -30,7 +31,7 @@ tee-blue,Crest Tee,Blue,assets/tee.png,25 EUR,https://example.com/products/tee
 hoodie,Rest Day Hoodie,Grey,,55 EUR,https://example.com/products/hoodie
 ```
 
-On success the command exits 0 and prints one JSON line. On failure it exits 1, writes one plain-language reason to stderr and leaves no new output files. `--help` lists every option.
+On success the command exits 0 and prints one JSON line. On failure it exits 1 and writes one plain-language reason to stderr. Validation, destination and staging failures leave existing outputs unchanged. Publishing uses individual renames, not a multi-file filesystem transaction. `--help` lists every option.
 
 ## The data contract
 
@@ -80,6 +81,31 @@ const html = await renderGallery(project);   // the self-contained gallery as a 
 fs.writeFileSync('gallery.html', html);
 fs.writeFileSync('project.json', JSON.stringify(project)); // importable in the app
 ```
+
+## Reusable card-data adapter
+
+Use `createCardCatalog(project)` from the same module when building a local directory, learning deck, component catalog or another interface. Do not scrape the exported HTML or duplicate the importer/validator. The browser runtime exposes the same adapter as `StudioPortability.createCardCatalog(project)`.
+
+```js
+import { prepareProject, createCardCatalog } from './scripts/render-gallery.mjs';
+const project = prepareProject({text, filename: 'records.json', imagesDir: workDir});
+const catalog = createCardCatalog(project);
+// catalog.format === 'otro-matiz-card-catalog-v1'
+// catalog.summary: {total, ready, pending, withImages}
+// catalog.cards: stable id, rowId, columnId, title, variant, status,
+//   descriptions[], sourceUrl, images {primary, detail, rowReference, columnReference},
+//   specifications[] and displaySpecifications[]. Each specification has key, label, value, scope.
+```
+
+The adapter preserves pending cards and source links, uses the gallery's privacy filter and does not mutate the editable project or fetch images. `prepareProject` embeds local images first; call the adapter after that for a portable catalog. A placeholder image is still an image, not proof of subject identity: any confidence/provenance policy belongs in the collecting integration. The term “public” here describes the projection that excludes workspace state; it does not authorize publishing supplied content.
+
+To write all three outputs in one agent step:
+
+```sh
+node scripts/render-gallery.mjs records.json gallery.html --project project.json --catalog cards.json
+```
+
+Output files must be distinct from each other and from the input, including paths through symlinked folders, hard links and case aliases. Directory and symlink output targets are refused before any exports are replaced. The optional `catalog` path appears in the success JSON only when requested. Collection/authentication connectors remain outside this repo and produce the existing record/image contract; this adapter is a renderer building block, not a remote-service connector.
 
 ## Wiring it into an agent or MCP server
 
