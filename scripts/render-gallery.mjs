@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import catalogChanges from '../catalog-changes.js';
 // Headless gallery export: dataset (JSON or CSV) + local images -> one shareable HTML file.
 // It runs the same importer, project validator and `buildGallery` as the browser app,
 // so a file made here matches Project -> Export & import -> Download gallery HTML.
@@ -191,6 +192,9 @@ async function main(argv) {
     ready: project.data.meta.ready, project: args.projectOut || null, ...(args.catalogOut ? {catalog: args.catalogOut} : {}) }) + '\n');
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(fs.realpathSync(process.argv[1])).href) {
+if (process.argv[1] && process.argv[1] !== '-' && fs.existsSync(process.argv[1]) && import.meta.url === pathToFileURL(fs.realpathSync(process.argv[1])).href) {
   main(process.argv.slice(2)).catch(error => { process.stderr.write(`${error.message}\n`); process.exitCode = 1; });
 }
+
+// Data-only comparison of explicit public catalog snapshots. No storage or collection.
+export const compareCardCatalogs = catalogChanges.compareCardCatalogs;

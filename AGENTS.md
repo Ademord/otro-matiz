@@ -160,3 +160,16 @@ The snippet was checked end to end with `@modelcontextprotocol/sdk` 1.32 and `zo
 | `examples/` | Neutral sample datasets |
 
 Changes to validation or the gallery format belong in those core files, so the app and the command stay identical. Run `npm test`, `npm run check` and `npm run build` before a pull request.
+
+
+## Compare public card snapshots
+
+`compareCardCatalogs(before, after)` from `scripts/render-gallery.mjs` compares two `createCardCatalog` outputs by stable card ID. It returns a data-only `otro-matiz-card-changes-v1` result with `added`, `removed` and `updated` lists. Each updated card contains the explicit old/new values for changed public fields. Pending cards and source links are preserved; record order and JSON object key order do not create content changes.
+
+```js
+import { compareCardCatalogs } from './scripts/render-gallery.mjs';
+const changes = compareCardCatalogs(previousCatalog, currentCatalog);
+// changes.updated: [{id: 'lamp-blue', fields: [{key: 'title', before: 'Desk lamp', after: 'Reading lamp'}]}]
+```
+
+For another explicit data projection, `catalog-changes.js` exports `compareFields(before, after, fieldNames)` (CommonJS; browser global `OtroMatizChanges`). Only selected own fields in plain JSON records are compared; missing values and null are equivalent. Non-JSON objects and circular values are refused. Values are copied, inputs are unchanged, and there are no network, database or browser-storage calls. Catalog comparisons allow only the public catalog field set; arbitrary workspace annotations are ignored. The adapter's privacy filter still determines which ordinary record content is suitable to share. Comparisons do not authorize publishing it. Authentication, observation timing, durable history, reader identities and read/unread persistence belong to the consuming integration.
