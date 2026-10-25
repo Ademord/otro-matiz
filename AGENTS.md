@@ -120,7 +120,8 @@ node scripts/render-sheet.mjs examples/checklist-bills.json bills.html --title "
 ```
 
 - Fields are named by their label, case-insensitive. A field no card has stops the export (a typo must not drop the Copy buttons or the total).
-- `--sum` values may be numbers or text like `CHF 1'234.50` or `1.234,50`; anything else stops the export. The total is added in cents, to two decimals.
+- `--sum` values may be numbers or text like `CHF 1'234.50` or `1.234,50`. Never guessed: more than two decimals (`1.234` could be a thousand), a currency other than `--unit` (`EUR 50` in a CHF total) or any other text stops the export. A card without a value shows "no amount" and adds nothing. The total is added in cents.
+- A stored tick belongs to the card's content: if the data of a card changes (next month's bill under the same id), the tick starts again from the data. A multi-line Copy value keeps its line breaks.
 - `--done` takes a yes/no field that ticks a card from the start; the viewer can untick it. `--group` turns a field's values into headings, in order of first appearance.
 - Fields used for Copy, sum, done or group are not repeated in the card's details. The image (`image` role) is shown full width, for example a payment QR code.
 - JS: `renderSheet(createCardCatalog(project), {copy, sum, unit, sumLabel, tick, done, group, linkLabel, id})` from `scripts/render-sheet.mjs`.

@@ -11,14 +11,24 @@ import { prepareProject, createCardCatalog } from './render-gallery.mjs';
 const escapeHtml = value => String(value).replace(/[&<>"']/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[ch]));
 const slug = text => String(text || 'sheet').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'sheet';
 
-/** "CHF 1'234.50", "1.234,50", 12.85 -> 1234.5 / 1234.5 / 12.85. Empty -> null. Anything else throws. */
-export function parseNumber(value) {
+/**
+ * "CHF 1'234.50", "1.234,50", 12.85 -> 1234.5 / 1234.5 / 12.85. Empty -> null. Anything else throws, never guesses:
+ * more than two decimals ("1.234" could be a thousand) and a currency other than `unit` ("EUR 50" in a CHF total) are refused.
+ */
+export function parseNumber(value, unit = '') {
   if (value === null || value === undefined || value === '') return null;
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
-  let text = String(value).replace(/[\s'’]/g, '').replace(/^[A-Za-z]{1,3}|[A-Za-z]{1,3}$/g, '');
+  if (typeof value === 'number' && Number.isFinite(value)) value = String(value);
+  const raw = String(value).replace(/[\s'’]/g, '');
+  const [, before, number, after] = /^([A-Za-z]*)(.*?)([A-Za-z]*)$/.exec(raw);
+  const currency = before || after;
+  if ((before && after) || (currency && currency.toUpperCase() !== String(unit).toUpperCase())) {
+    throw new Error(`“${value}” is not ${unit ? `a ${unit} amount` : 'a plain number'}.`);
+  }
+  let text = number;
   if (text.includes('.') && text.includes(',')) text = text.lastIndexOf(',') > text.lastIndexOf('.') ? text.replace(/\./g, '').replace(',', '.') : text.replace(/,/g, '');
   else text = text.replace(',', '.');
   if (!/^-?\d+(\.\d+)?$/.test(text)) throw new Error(`“${value}” is not a number.`);
+  if (/\.\d{3,}$/.test(text)) throw new Error(`“${value}” has more than two decimals (or a thousands separator): write it as 1234.00.`);
   return Number(text);
 }
 
@@ -53,13 +63,15 @@ main{max-width:640px;margin:0 auto;padding:16px}h1{font-size:1.2rem;margin:0 0 4
 .specs{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:6px 0}.specs dt{font-weight:600}.specs dd{margin:0}
 .image{text-align:center;margin:8px 0}.image img{width:min(100%,300px);height:auto;background:#fff;padding:6px;border-radius:6px;image-rendering:pixelated}
 .copy{display:flex;align-items:center;gap:6px;margin:5px 0}.copy .label{width:76px;font-size:.78rem;color:var(--mut);overflow-wrap:anywhere}
-.copy input{flex:1;min-width:0;font:inherit;font-size:.9rem;padding:7px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+.amount.none{color:var(--warn);font-size:.85rem;font-weight:600}
+.copy input,.copy textarea{flex:1;min-width:0;resize:none;font:inherit;font-size:.9rem;padding:7px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
 button,.source{font:inherit;font-size:.9rem;padding:7px 12px;border-radius:6px;border:1px solid var(--acc);background:transparent;color:var(--acc);text-decoration:none;display:inline-block;cursor:pointer}
 .source{margin:6px 0}.tick{display:block;margin-top:10px;font-weight:600}.tick input{width:20px;height:20px;vertical-align:middle}
 footer{color:var(--mut);font-size:.78rem;margin:20px 0}
 @media print{.total{position:static}button{display:none}.sheet-card{break-inside:avoid}}`;
 
-// Inlined into the page; its sha256 goes into the CSP, so no other script can run.
+// Inlined into the page; its sha256 goes into the CSP, so no other script can run. Line endings are LF: a browser
+// hashes the script after turning CRLF into LF, and summarize.toString() keeps the CRLF of a Windows checkout.
 function pageScript(storageKey) {
   return `(function(){
 var summarize=${summarize.toString()};
@@ -72,14 +84,14 @@ function update(){
   var s=summarize(items),open=s.open+' of '+s.total+' open';
   box.textContent=box.dataset.sum?box.dataset.label+': '+(box.dataset.unit?box.dataset.unit+' ':'')+(s.cents/100).toFixed(2)+' ('+open+')':open;
 }
-cards.forEach(function(c){var t=c.querySelector('.tick input'),k=KEY+':'+c.dataset.id,v=get(k);
+cards.forEach(function(c){var t=c.querySelector('.tick input'),k=KEY+':'+c.dataset.key,v=get(k);
   if(v==='1'||v==='0')t.checked=v==='1';
   t.addEventListener('change',function(){put(k,t.checked?'1':'0');update()})});
 document.querySelectorAll('.copy button').forEach(function(b){b.addEventListener('click',function(){
   var i=b.previousElementSibling;function ok(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1200)}
   function old(){i.select();try{document.execCommand('copy');ok()}catch(e){}}
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(i.value).then(ok,old);else old()})});
-update();})();`;
+update();})();`.replace(/\r\n?/g, '\n');
 }
 
 /**
@@ -113,15 +125,24 @@ export function renderSheet(catalog, options = {}) {
   for (const card of catalog.cards) {
     const where = `Card “${card.title}”`;
     let amount = null;
-    if (sum) { try { amount = parseNumber(pick(card, sum)?.value); } catch (error) { throw new Error(`${where}: ${error.message}`); } }
+    if (sum) { try { amount = parseNumber(pick(card, sum)?.value, unit); } catch (error) { throw new Error(`${where}: ${error.message}`); } }
     const isDone = done ? parseBool(pick(card, done)?.value, where) : false;
     const heading = group ? String(pick(card, group)?.value ?? '') : '';
+    // A multi-line value (an address) goes in a textarea: an <input> would drop its line breaks when copied.
+    const field = entry => /[\r\n]/.test(String(entry.value))
+      ? `<textarea readonly rows="${String(entry.value).split(/\r\n|\r|\n/).length}" aria-label="${escapeHtml(entry.label)}">${escapeHtml(entry.value)}</textarea>`
+      : `<input readonly value="${escapeHtml(entry.value)}" aria-label="${escapeHtml(entry.label)}">`;
     const copies = copy.map(label => pick(card, label)).filter(entry => entry && entry.value !== null && String(entry.value) !== '')
-      .map(entry => `<div class="copy"><span class="label">${escapeHtml(entry.label)}</span><input readonly value="${escapeHtml(entry.value)}" aria-label="${escapeHtml(entry.label)}"><button type="button">Copy</button></div>`).join('');
+      .map(entry => `<div class="copy"><span class="label">${escapeHtml(entry.label)}</span>${field(entry)}<button type="button">Copy</button></div>`).join('');
     const rest = card.specifications.filter(entry => !used.has(lower(entry.label)) && entry.value !== null && String(entry.value).trim());
     const specs = rest.length ? `<dl class="specs">${rest.map(entry => `<dt>${escapeHtml(entry.label)}</dt><dd>${escapeHtml(entry.value)}</dd>`).join('')}</dl>` : '';
-    const html = `<section class="sheet-card${isDone ? ' done' : ''}" data-id="${escapeHtml(card.id)}" data-cents="${amount === null ? 0 : Math.round(amount * 100)}">
-<div class="top"><div><h2>${escapeHtml(card.title)}</h2>${multiVariant ? `<div class="variant">${escapeHtml(card.variant)}</div>` : ''}</div>${amount === null ? '' : `<div class="amount">${escapeHtml(unit ? `${unit} ` : '')}${amount.toFixed(2)}</div>`}</div>
+    // The stored tick belongs to this exact card content: a regenerated sheet with a changed bill (or next month's bill
+    // under the same id) starts from the data again instead of inheriting an old "Paid".
+    const key = `${card.id}:${crypto.createHash('sha256').update(JSON.stringify([card.title, card.variant, card.specifications])).digest('hex').slice(0, 12)}`;
+    const amountHtml = !sum ? '' : amount === null ? '<div class="amount none">no amount</div>'
+      : `<div class="amount">${escapeHtml(unit ? `${unit} ` : '')}${amount.toFixed(2)}</div>`;
+    const html = `<section class="sheet-card${isDone ? ' done' : ''}" data-id="${escapeHtml(card.id)}" data-key="${escapeHtml(key)}" data-cents="${amount === null ? 0 : Math.round(amount * 100)}">
+<div class="top"><div><h2>${escapeHtml(card.title)}</h2>${multiVariant ? `<div class="variant">${escapeHtml(card.variant)}</div>` : ''}</div>${amountHtml}</div>
 ${card.descriptions.map(text => `<p class="description">${escapeHtml(text)}</p>`).join('')}${specs}
 ${card.images.primary ? `<div class="image"><img src="${escapeHtml(card.images.primary)}" alt="${escapeHtml(card.title)}"></div>` : ''}${copies}
 ${card.sourceUrl ? `<a class="source" href="${escapeHtml(card.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(linkLabel)}</a>` : ''}
@@ -192,16 +213,20 @@ function parseArgs(argv) {
 async function main(argv) {
   const args = parseArgs(argv);
   if (args.help) { process.stdout.write(USAGE + '\n'); return; }
+  if (!fs.existsSync(args.input) || !fs.statSync(args.input).isFile()) throw new Error(`The dataset “${args.input}” does not exist.`);
   const output = path.resolve(args.output);
-  if (fs.existsSync(output) && (!fs.statSync(output).isFile() || fs.realpathSync(output) === fs.realpathSync(args.input))) {
-    throw new Error('The sheet must be a new or regular file, not the dataset itself.');
+  if (fs.existsSync(output)) {
+    // File identity, not the path: catches case aliases (data.json / DATA.JSON on Windows), hard and symbolic links.
+    const a = fs.statSync(args.input), b = fs.lstatSync(output);
+    if (!b.isFile()) throw new Error('The sheet must be a new or regular file, not a folder or a link.');
+    if (a.dev === b.dev && a.ino === b.ino) throw new Error('The sheet must not replace the dataset.');
   }
   const project = prepareProject({text: fs.readFileSync(args.input, 'utf8'), filename: args.input,
     imagesDir: args.imagesDir || path.dirname(path.resolve(args.input)), mapping: args.mapping, tableIndex: args.tableIndex, title: args.title});
   const catalog = createCardCatalog(project);
   const html = renderSheet(catalog, args);
   const temp = `${output}.${process.pid}.tmp`;
-  try { fs.writeFileSync(temp, html); fs.renameSync(temp, output); } catch (error) { fs.rmSync(temp, {force: true}); throw error; }
+  try { fs.writeFileSync(temp, html, {flag: 'wx'}); fs.renameSync(temp, output); } catch (error) { fs.rmSync(temp, {force: true}); throw error; }
   const opened = /id="sheet-total"[^>]*>([^<]*)</.exec(html)[1];
   process.stdout.write(JSON.stringify({html: args.output, bytes: Buffer.byteLength(html), cards: catalog.cards.length, open: opened}) + '\n');
 }
