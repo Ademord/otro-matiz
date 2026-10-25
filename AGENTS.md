@@ -9,6 +9,8 @@ This file is for coding agents, scripts and MCP servers that want to **fill Otro
 | Records + photos → one HTML file to send to friends | `node scripts/render-gallery.mjs` (or `npm run gallery --`) |
 | Records + photos → editable project the user opens in the app | same command with `--project out.json`, then **Project → Export & import → Import a project** in the app |
 | Call it from your own Node code | `import { prepareProject, renderGallery } from './scripts/render-gallery.mjs'` |
+| Validated records → card data for another view or connector | `createCardCatalog(project)` or `--catalog cards.json` |
+| Records → a checklist page with tick boxes, Copy buttons and a running total (bills to pay, packing list) | `node scripts/render-sheet.mjs`, see [Checklist sheet](#checklist-sheet) |
 
 The command runs the app's own importer (`dataset-import.js`), validator (`project-store.js`) and gallery exporter (`portability.js` → `buildGallery`). A file made here is the same as **Download gallery HTML** in the app. Don't copy those modules into another repo: call this script from a checkout pinned to a commit or tag.
 
@@ -30,7 +32,7 @@ tee-blue,Crest Tee,Blue,assets/tee.png,25 EUR,https://example.com/products/tee
 hoodie,Rest Day Hoodie,Grey,,55 EUR,https://example.com/products/hoodie
 ```
 
-On success the command exits 0 and prints one JSON line. On failure it exits 1, writes one plain-language reason to stderr and leaves no new output files. `--help` lists every option.
+On success the command exits 0 and prints one JSON line. On failure it exits 1 and writes one plain-language reason to stderr. Validation, destination and staging failures leave existing outputs unchanged. Publishing uses individual renames, not a multi-file filesystem transaction. `--help` lists every option.
 
 ## The data contract
 
@@ -81,6 +83,51 @@ fs.writeFileSync('gallery.html', html);
 fs.writeFileSync('project.json', JSON.stringify(project)); // importable in the app
 ```
 
+## Reusable card-data adapter
+
+Use `createCardCatalog(project)` from the same module when building a local directory, learning deck, component catalog or another interface. Do not scrape the exported HTML or duplicate the importer/validator. The browser runtime exposes the same adapter as `StudioPortability.createCardCatalog(project)`.
+
+```js
+import { prepareProject, createCardCatalog } from './scripts/render-gallery.mjs';
+const project = prepareProject({text, filename: 'records.json', imagesDir: workDir});
+const catalog = createCardCatalog(project);
+// catalog.format === 'otro-matiz-card-catalog-v1'
+// catalog.summary: {total, ready, pending, withImages}
+// catalog.cards: stable id, rowId, columnId, title, variant, status,
+//   descriptions[], sourceUrl, images {primary, detail, rowReference, columnReference},
+//   specifications[] and displaySpecifications[]. Each specification has key, label, value, scope.
+```
+
+The adapter preserves pending cards and source links, uses the gallery's privacy filter and does not mutate the editable project or fetch images. `prepareProject` embeds local images first; call the adapter after that for a portable catalog. A placeholder image is still an image, not proof of subject identity: any confidence/provenance policy belongs in the collecting integration. The term “public” here describes the projection that excludes workspace state; it does not authorize publishing supplied content.
+
+To write all three outputs in one agent step:
+
+```sh
+node scripts/render-gallery.mjs records.json gallery.html --project project.json --catalog cards.json
+```
+
+Output files must be distinct from each other and from the input, including paths through symlinked folders, hard links and case aliases. Directory and symlink output targets are refused before any exports are replaced. The optional `catalog` path appears in the success JSON only when requested. Collection/authentication connectors remain outside this repo and produce the existing record/image contract; this adapter is a renderer building block, not a remote-service connector.
+
+## Checklist sheet
+
+A second view built on the card catalog. Same records, same importer and validator; the output is one self-contained page where every card has a tick box, Copy buttons for chosen fields and a running total of one number field over the cards not ticked. Ticks are saved in the viewer's browser only (`localStorage`). The page's only script is allowed by its sha256 in the CSP; it makes no network calls.
+
+```sh
+node scripts/render-sheet.mjs examples/checklist-bills.json bills.html --title "Bills to pay" \
+  --copy IBAN --copy reference --copy amount --sum amount --unit CHF --sum-label "Still to pay" \
+  --tick Paid --done paid --group status --link-label "Open invoice"
+# {"html":"bills.html","bytes":7948,"cards":4,"open":"Still to pay: CHF 243.30 (3 of 4 open)"}
+```
+
+- Fields are named by their label, case-insensitive. A field no card has stops the export (a typo must not drop the Copy buttons or the total).
+- `--sum` values may be numbers or text like `CHF 1'234.50` or `1.234,50`. Never guessed: more than two decimals (`1.234` could be a thousand), a currency other than `--unit` (`EUR 50` in a CHF total) or any other text stops the export. A card without a value shows "no amount" and adds nothing. The total is added in cents.
+- A stored tick belongs to the card's content: if the data of a card changes (next month's bill under the same id), the tick starts again from the data. A multi-line Copy value keeps its line breaks.
+- `--done` takes a yes/no field that ticks a card from the start; the viewer can untick it. `--group` turns a field's values into headings, in order of first appearance.
+- Fields used for Copy, sum, done or group are not repeated in the card's details. The image (`image` role) is shown full width, for example a payment QR code.
+- JS: `renderSheet(createCardCatalog(project), {copy, sum, unit, sumLabel, tick, done, group, linkLabel, id})` from `scripts/render-sheet.mjs`.
+
+Domain logic stays outside: a bills integration builds the QR images and checks IBANs and references itself, then hands records to this command. Real bills never go into this repository; `examples/checklist-bills.json` is invented.
+
 ## Wiring it into an agent or MCP server
 
 Keep integrations outside this repository, for example as a skill or plugin in your agent repo. Their job is to collect records and download photos. This repo turns them into the gallery.
@@ -127,6 +174,8 @@ The snippet was checked end to end with `@modelcontextprotocol/sdk` 1.32 and `zo
 |---|---|
 | `scripts/render-gallery.mjs` | Headless command and JS API described here |
 | `tests/render-gallery.test.cjs` | Behaviour of the command: links, pending cards, refusals |
+| `scripts/render-sheet.mjs` | Checklist sheet view on the card catalog (`renderSheet`, `parseNumber`, `summarize`) |
+| `tests/render-sheet.test.cjs` | Sheet totals, exact copy values, refusals, CSP hash, escaping |
 | `dataset-import.js` | Parses CSV/JSON and maps record fields (`parseInput`, `suggestMapping`, `mapRecords`, `prepareProject`) |
 | `project-store.js` | The validation boundary for every project: IDs, paths, images, limits (`validateProject`, `validateData`) |
 | `source-links.js` | Which product links are accepted |
@@ -134,3 +183,16 @@ The snippet was checked end to end with `@modelcontextprotocol/sdk` 1.32 and `zo
 | `examples/` | Neutral sample datasets |
 
 Changes to validation or the gallery format belong in those core files, so the app and the command stay identical. Run `npm test`, `npm run check` and `npm run build` before a pull request.
+
+
+## Compare public card snapshots
+
+`compareCardCatalogs(before, after)` from `scripts/render-gallery.mjs` compares two `createCardCatalog` outputs by stable card ID. It returns a data-only `otro-matiz-card-changes-v1` result with `added`, `removed` and `updated` lists. Each updated card contains the explicit old/new values for changed public fields. Pending cards and source links are preserved; record order and JSON object key order do not create content changes.
+
+```js
+import { compareCardCatalogs } from './scripts/render-gallery.mjs';
+const changes = compareCardCatalogs(previousCatalog, currentCatalog);
+// changes.updated: [{id: 'lamp-blue', fields: [{key: 'title', before: 'Desk lamp', after: 'Reading lamp'}]}]
+```
+
+For another explicit data projection, `catalog-changes.js` exports `compareFields(before, after, fieldNames)` (CommonJS; browser global `OtroMatizChanges`). Only selected own fields in plain JSON records are compared; missing values and null are equivalent. Non-JSON objects and circular values are refused. Values are copied, inputs are unchanged, and there are no network, database or browser-storage calls. Catalog comparisons allow only the public catalog field set; arbitrary workspace annotations are ignored. The adapter's privacy filter still determines which ordinary record content is suitable to share. Comparisons do not authorize publishing it. Authentication, observation timing, durable history, reader identities and read/unread persistence belong to the consuming integration.
