@@ -1,0 +1,44 @@
+[
+  {
+    "id": "water-2026-10",
+    "name": "City water, October",
+    "description": "Invented sample bill. The IBAN and reference are the published Swiss QR-bill examples.",
+    "payee": "Example Utilities AG, 8000 Zürich",
+    "IBAN": "CH93 0076 2011 6238 5295 7",
+    "reference": "21 00000 00003 13947 14300 09017",
+    "amount": "84.30",
+    "due": "15 Nov 2026",
+    "status": "To pay",
+    "paid": false,
+    "link": "https://example.com/invoices/water-2026-10"
+  },
+  {
+    "id": "phone-2026-10",
+    "name": "Phone plan, October",
+    "payee": "Example Mobile AG, 3000 Bern",
+    "IBAN": "CH93 0076 2011 6238 5295 7",
+    "reference": "21 00000 00003 13947 14300 09017",
+    "amount": "39.00",
+    "due": "20 Nov 2026",
+    "status": "To pay",
+    "paid": false,
+    "link": "https://example.com/invoices/phone-2026-10"
+  },
+  {
+    "id": "dentist-2026-10",
+    "name": "Dentist check-up",
+    "description": "Insurance may pay part of it. Check before paying.",
+    "payee": "Example Dental Practice, 8400 Winterthur",
+    "amount": "CHF 120.00",
+    "due": "30 Nov 2026",
+    "status": "To check",
+    "paid": false
+  },
+  {
+    "id": "gym-2026-10",
+    "name": "Gym, October",
+    "amount": "59.00",
+    "status": "Paid",
+    "paid": true
+  }
+]

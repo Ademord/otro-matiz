@@ -10,6 +10,7 @@ This file is for coding agents, scripts and MCP servers that want to **fill Otro
 | Records + photos → editable project the user opens in the app | same command with `--project out.json`, then **Project → Export & import → Import a project** in the app |
 | Call it from your own Node code | `import { prepareProject, renderGallery } from './scripts/render-gallery.mjs'` |
 | Validated records → card data for another view or connector | `createCardCatalog(project)` or `--catalog cards.json` |
+| Records → a checklist page with tick boxes, Copy buttons and a running total (bills to pay, packing list) | `node scripts/render-sheet.mjs`, see [Checklist sheet](#checklist-sheet) |
 
 The command runs the app's own importer (`dataset-import.js`), validator (`project-store.js`) and gallery exporter (`portability.js` → `buildGallery`). A file made here is the same as **Download gallery HTML** in the app. Don't copy those modules into another repo: call this script from a checkout pinned to a commit or tag.
 
@@ -107,6 +108,25 @@ node scripts/render-gallery.mjs records.json gallery.html --project project.json
 
 Output files must be distinct from each other and from the input, including paths through symlinked folders, hard links and case aliases. Directory and symlink output targets are refused before any exports are replaced. The optional `catalog` path appears in the success JSON only when requested. Collection/authentication connectors remain outside this repo and produce the existing record/image contract; this adapter is a renderer building block, not a remote-service connector.
 
+## Checklist sheet
+
+A second view built on the card catalog. Same records, same importer and validator; the output is one self-contained page where every card has a tick box, Copy buttons for chosen fields and a running total of one number field over the cards not ticked. Ticks are saved in the viewer's browser only (`localStorage`). The page's only script is allowed by its sha256 in the CSP; it makes no network calls.
+
+```sh
+node scripts/render-sheet.mjs examples/checklist-bills.json bills.html --title "Bills to pay" \
+  --copy IBAN --copy reference --copy amount --sum amount --unit CHF --sum-label "Still to pay" \
+  --tick Paid --done paid --group status --link-label "Open invoice"
+# {"html":"bills.html","bytes":7948,"cards":4,"open":"Still to pay: CHF 243.30 (3 of 4 open)"}
+```
+
+- Fields are named by their label, case-insensitive. A field no card has stops the export (a typo must not drop the Copy buttons or the total).
+- `--sum` values may be numbers or text like `CHF 1'234.50` or `1.234,50`; anything else stops the export. The total is added in cents, to two decimals.
+- `--done` takes a yes/no field that ticks a card from the start; the viewer can untick it. `--group` turns a field's values into headings, in order of first appearance.
+- Fields used for Copy, sum, done or group are not repeated in the card's details. The image (`image` role) is shown full width, for example a payment QR code.
+- JS: `renderSheet(createCardCatalog(project), {copy, sum, unit, sumLabel, tick, done, group, linkLabel, id})` from `scripts/render-sheet.mjs`.
+
+Domain logic stays outside: a bills integration builds the QR images and checks IBANs and references itself, then hands records to this command. Real bills never go into this repository; `examples/checklist-bills.json` is invented.
+
 ## Wiring it into an agent or MCP server
 
 Keep integrations outside this repository, for example as a skill or plugin in your agent repo. Their job is to collect records and download photos. This repo turns them into the gallery.
@@ -153,6 +173,8 @@ The snippet was checked end to end with `@modelcontextprotocol/sdk` 1.32 and `zo
 |---|---|
 | `scripts/render-gallery.mjs` | Headless command and JS API described here |
 | `tests/render-gallery.test.cjs` | Behaviour of the command: links, pending cards, refusals |
+| `scripts/render-sheet.mjs` | Checklist sheet view on the card catalog (`renderSheet`, `parseNumber`, `summarize`) |
+| `tests/render-sheet.test.cjs` | Sheet totals, exact copy values, refusals, CSP hash, escaping |
 | `dataset-import.js` | Parses CSV/JSON and maps record fields (`parseInput`, `suggestMapping`, `mapRecords`, `prepareProject`) |
 | `project-store.js` | The validation boundary for every project: IDs, paths, images, limits (`validateProject`, `validateData`) |
 | `source-links.js` | Which product links are accepted |
